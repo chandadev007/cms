@@ -78,7 +78,7 @@ public class DBLogRepository {
             Map<String, Object> out = ekycLogCall.execute(in);
 
             responseMap.put("p_result", out.get("P_RESULT"));
-
+            
             // Return as JSON string
             return objectMapper.writeValueAsString(responseMap);
         } catch (Exception e) {

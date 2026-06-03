@@ -1,7 +1,6 @@
 package com.main.config;
 
 import org.springframework.context.annotation.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration

@@ -29,9 +29,14 @@ public class DBLogService {
             String outParams = dbLogRepository.createEkycLog(actionName, actionType, tableId, unitId, userId, userName);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
-
             Map<String, Object> response = new HashMap<>();
             response.put("p_result", jsonNode.has("p_result") ? jsonNode.get("p_result").asText() : "");
+
+            if (!"success".equalsIgnoreCase(response.get("p_result").toString())) {
+                logger.warn("Failed to create Ekyc log for action: {}. Result: {}", actionName, response.get("p_result"));
+            } else {
+                logger.info("Ekyc log created successfully for action: {}", actionName);
+            }
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
@@ -42,14 +47,19 @@ public class DBLogService {
 
     public String createEkybLog(String actionName, String actionType, String tableId, String unitId, String userId,
             String userName) {
-        logger.info("Initiating Ekyc creation for: {}", actionName);
+        logger.info("Initiating Ekyb creation for: {}", actionName);
         try {
             String outParams = dbLogRepository.createEkybLog(actionName, actionType, tableId, unitId, userId, userName);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
-
             Map<String, Object> response = new HashMap<>();
             response.put("p_result", jsonNode.has("p_result") ? jsonNode.get("p_result").asText() : "");
+
+            if (!"success".equalsIgnoreCase(response.get("p_result").toString())) {
+                logger.warn("Failed to create Ekyb log for action: {}. Result: {}", actionName, response.get("p_result"));
+            } else {
+                logger.info("Ekyb log created successfully for action: {}", actionName);
+            }
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {

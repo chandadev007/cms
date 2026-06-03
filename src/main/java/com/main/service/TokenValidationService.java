@@ -1,13 +1,17 @@
 package com.main.service;
 
 import com.main.model.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,12 +23,13 @@ public class TokenValidationService {
     @Value("${cms.app-management.url}")
     private String remoteUrl;
 
-    private final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(TokenValidationService.class);
+    private final RestClient restClient;
     private final ObjectMapper mapper;
 
     // Inject beans for better performance
-    public TokenValidationService(ObjectMapper mapper) {
-        this.restTemplate = new RestTemplate();
+    public TokenValidationService(RestClient appManagementRestClient, ObjectMapper mapper) {
+        this.restClient = appManagementRestClient;
         this.mapper = mapper;
     }
 
@@ -32,6 +37,7 @@ public class TokenValidationService {
         if (token == null || token.isEmpty() || userId == null || userId.isEmpty()) {
             return buildErrorJson("Token and User ID are required");
         }
+        logger.info("Initiating Token validation for: {}", userId);
 
         try {
             // 1. Validate Token
@@ -53,16 +59,16 @@ public class TokenValidationService {
             responseObj.setErrorDetail("User information retrieved successfully");
 
             UserData userData = new UserData();
-            
+
             // Use path() and treeToValue safely
             if (userInfoNode.has("userInfo")) {
                 userData.setUserInfo(mapper.treeToValue(userInfoNode.path("userInfo"), UserInfo.class));
             }
-            
+
             // Optimized Collection Mapping
             userData.setListUnitInCharge(mapper.convertValue(userInfoNode.path("listUnitInCharge"),
                     mapper.getTypeFactory().constructCollectionType(List.class, UserInChargeUnit.class)));
-            
+
             userData.setApplications(mapper.convertValue(userInfoNode.path("applications"),
                     mapper.getTypeFactory().constructCollectionType(List.class, UserInchargeApp.class)));
 
@@ -70,17 +76,16 @@ public class TokenValidationService {
             return mapper.writeValueAsString(responseObj);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("Exception during token validation for userId {}: {}", userId, e.getMessage());
             return buildErrorJson("Validation Error: " + e.getMessage());
         }
     }
 
     /**
-     * FIX: Use Object.class instead of JsonNode.class to avoid abstract class instantiation error.
+     * FIX: Use Object.class instead of JsonNode.class to avoid abstract class
+     * instantiation error.
      */
     private JsonNode callRemoteService(String msgId, String userId, String token) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> requestMap = new HashMap<>();
         requestMap.put("messageId", msgId);
@@ -89,24 +94,35 @@ public class TokenValidationService {
             requestMap.put("jwtToken", token);
         }
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestMap, headers);
-
-        // Fetch as a generic Object (usually maps to a LinkedHashMap internally)
-        Object response = restTemplate.postForObject(remoteUrl, entity, Object.class);
-
-        // Convert the generic Object into a JsonNode safely
-        return (response == null) ? mapper.createObjectNode() : mapper.valueToTree(response);
+        final String remoteUrl2 = remoteUrl;
+        if (remoteUrl2 != null) {
+            final MediaType application_JSON2 = MediaType.APPLICATION_JSON;
+            if (application_JSON2 != null) {
+                JsonNode response = restClient.post()
+                        .uri(remoteUrl2)
+                        .contentType(application_JSON2)
+                        .body(requestMap)
+                        .retrieve()
+                        .body(JsonNode.class);
+                return (response == null) ? JsonNodeFactory.instance.objectNode() : response;
+            } else {
+                return JsonNodeFactory.instance.objectNode();
+            }
+        } else {
+            return JsonNodeFactory.instance.objectNode();
+        }
     }
 
     private String buildErrorJson(String detail) {
-        // Using a Map for error JSON is safer than String concatenation to handle special characters
+        // Using a Map for error JSON is safer than String concatenation to handle
+        // special characters
         try {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "1");
+            error.put("error", "2");
             error.put("errorDetail", detail);
             return mapper.writeValueAsString(error);
         } catch (Exception e) {
-            return "{\"error\":\"1\", \"errorDetail\":\"" + detail + "\"}";
+            return "{\"error\":\"2\", \"errorDetail\":\"" + detail + "\"}";
         }
     }
 }

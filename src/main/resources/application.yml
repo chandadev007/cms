@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: cms
+
+  # Database Configuration
+  datasource:
+    url: jdbc:oracle:thin:@//10.195.55.48:1521/TESTAPPDB
+    username: internaldb
+    password: internaldb
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  # Multipart / File Upload Size Limits
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 15MB
+
+  # Thread Pool & Task Execution Configuration
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 10
+        queue-capacity: 100
+
+# Server Configuration
+server:
+  port: 8084
+  address: 0.0.0.0
+
+# Custom Application Properties (cms.*)
+cms:
+  app-management:
+    url: http://10.195.55.55:9002/BIDC/AppManagement/doProcess
+
+  db:
+    schema-name: INTERNALDB
+    catalog-name: PKG_CAMDx
+
+  # Application Roles Configuration
+  app:
+    role:
+      csd_inputter_01: CSD_Inputter_01
+      csd_inputter_02: CSD_Inputter_02
+      lld_inputter_01: LLD_Inputter_01
+      lld_inputter_02: LLD_Inputter_02
+    
+    # RestClient Timeout Configuration (in Milliseconds)
+    restclient:
+      connection_timeout: 600000
+      socket_timeout: 600000
+
+  # File Management Service Configuration
+  file-management:
+    app-code: CMS
+    upload:
+      url: http://10.195.6.52:8082/upload
+    download:
+      url: http://10.195.6.52:8082/download
+    user: bidc
+    password: BIDc@12313210825
+
+  # CamDX Gateway Integration API
+  camdx:
+    ekyc:
+      verify-infor: http://10.195.6.52:8281/camdx-service/v1/ekyc
+    ekyb:
+      verify-basic-infor: http://10.195.6.52:8281/camdx-service/v1/ekyb
+    api:
+      username: bidc-camdx
+      password: Camdx@1231
+    schedule:
+      interval: 10000 # Schedule interval in milliseconds 
