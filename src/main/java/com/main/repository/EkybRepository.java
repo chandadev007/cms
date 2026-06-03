@@ -296,6 +296,7 @@ public class EkybRepository {
                 }, searchString, searchString, searchString, searchString, offSet, size);
         }
 
+        @SuppressWarnings("null")
         public int getEkybPageCount(String searchValue) {
                 String sql = "SELECT COUNT(*) COUNT_VALUE FROM (  \r\n" + //
                                 "  SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
@@ -324,8 +325,7 @@ public class EkybRepository {
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
                                 "         B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
-                                + //
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"+ //
                                 "              \r\n" + //
                                 "  FROM EKYB_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
@@ -521,6 +521,7 @@ public class EkybRepository {
                                 fromDate, fromDate, toDate, toDate, offSet, size);
         }
 
+        @SuppressWarnings("null")
         public int getListByAppChannelCount(String searchValue, String appChannel,
                         String requestType, String statusDesc, String fromDate, String toDate) {
                 String sql = "\r\n" + //
@@ -581,8 +582,7 @@ public class EkybRepository {
 
                 String sql = "SELECT X.STATUS, COUNT(*) AS COUNT_VALUE \r\n" + //
                                 "FROM(\r\n" + //
-                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n"
-                                + //
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n" + //
                                 "                    FROM CAMDX_LOG T \r\n" + //
                                 "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
                                 "                    )      \r\n" + //
@@ -629,6 +629,7 @@ public class EkybRepository {
                 return map;
         }
 
+        @SuppressWarnings("null")
         public int checkEkybExisting(String type, String singleId, String tin, String companyNameEn,
                         String companyNameKh) {
 
@@ -645,4 +646,7 @@ public class EkybRepository {
                                 companyNameEn,
                                 companyNameEn, companyNameKh, companyNameKh);
         }
+
+        
+
 }

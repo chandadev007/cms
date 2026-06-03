@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyc;
 import com.main.model.History;
 import com.main.model.HistoryAction;
+import com.main.model.ReportFull;
 import com.main.utilities.StatusClassification;
 
 import jakarta.annotation.PostConstruct;
@@ -368,6 +369,7 @@ public class EkycRepository {
                                 offSet, size);
         }
 
+        @SuppressWarnings("null")
         public int getEkycPageCount(String searchValue) {
                 String sql = "SELECT COUNT(*) AS COUNT_VALUE FROM(  \r\n" + //
                                 "  SELECT ID, APP_CODE, APP_CHANNEL, STATUS, SCORE, TYPE, ERROR_DETAIL, ID_NUMBER, \r\n"
@@ -489,6 +491,7 @@ public class EkycRepository {
                                 userId, userId, offSet, size);
         }
 
+        @SuppressWarnings("null")
         public int getHistoriesCount(String searchValue, String requestType, String statusDesc,
                         String fromDate, String toDate, String userId) {
                 String sql = "SELECT COUNT(*) AS COUNT_VALUE FROM(  \r\n" + //
@@ -736,6 +739,7 @@ public class EkycRepository {
                 return map;
         }
 
+        @SuppressWarnings("null")
         public int checkEkycExisting(String idNumber, String firstNameKh, String lastNameKh, String firstNameEn,
                         String lastNameEn, String gender, String dob, String issuedDate, String expiredDate,
                         String type) {
@@ -767,6 +771,97 @@ public class EkycRepository {
                                 lastNameKh, lastNameKh, firstNameEn, firstNameEn, lastNameEn, lastNameEn, gender,
                                 gender, dob, dob,
                                 issuedDate, issuedDate, expiredDate, expiredDate, type, type);
+        }
+
+        public List<ReportFull> getFullReport(String fromDate, String toDate, String channel, String requestType) {
+                String sql = "SELECT X.* \r\n" + //
+                                "FROM(\r\n" + //
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME,  MAX(UNIT_ID) AS UNIT_ID\r\n"
+                                + //
+                                "                    FROM CAMDX_LOG T \r\n" + //
+                                "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
+                                "                    )\r\n" + //
+                                "  SELECT A.ID_NUMBER, (A.LAST_NAME_EN || ' ' || A.FIRST_NAME_EN) AS CUSTOMER_NAME_EN, \r\n"
+                                + //
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'DD/MM/YYYY') AS DATE_ASSESSMENT, \r\n"
+                                + //
+                                "         PKG_CAMDX.report_assessment_status(A.SCORE, A.STATUS) AS CURREENT_ASSESSMENT, \r\n"
+                                + //
+                                "         A.SCORE AS CURRENT_SCORE, PKG_CAMDX.report_status(A.STATUS) AS STATUS, A.GENDER, \r\n"
+                                + //
+                                "         TO_CHAR(A.DOB, 'DD/MM/YYYY') AS DOB, A.ID_NUMBER AS NATIONAL_ID, \r\n" + //
+                                "         (A.LAST_NAME_KH || ' ' || A.FIRST_NAME_KH) AS CUSTOMER_NAME_KH, 'ID NUMBER' AS LEGAL_DOC_NAME, \r\n"
+                                + //
+                                "         'CAMBODIA' AS NATIONALITY, 'KH' AS RESIDENCE, 'INDIVIDUAL'AS SECTOR, \r\n" + //
+                                "         PKG_CAMDX.get_branch_id(B.UNIT_ID) AS BRANCH_CODE, \r\n" + //
+                                "         TO_CHAR(A.ISSUED_DATE, 'DD/MM/YYYY') AS ISSUED_DATE, TO_CHAR(A.EXPIRED_DATE, 'DD/MM/YYYY') AS EXPIRED_DATE, \r\n"
+                                + //
+                                "         'eKYC' AS REQUEST_TYPE, A.APP_CHANNEL, B.CREATED_TIME\r\n" + //
+                                "  FROM EKYC_PROFILE A, LOG_DATE B\r\n" + //
+                                "  WHERE A.ID = B.TABLE_ID\r\n" + //
+                                "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
+                                "\r\n" + //
+                                "  UNION \r\n" + //
+                                "  SELECT CASE WHEN C.TYPE IN (1, 3) THEN C.SINGLE_ID \r\n" + //
+                                "              ELSE C.TIN \r\n" + //
+                                "         END AS ID_NUMBER, C.COMPANY_NAME_EN AS CUSTOMER_NAME_EN, \r\n" + //
+                                "         TO_CHAR(TO_DATE(D.CREATED_TIME, 'YYYYMMDDHH24MI'), 'DD/MM/YYYY') AS DATE_ASSESSMENT, \r\n"
+                                + //
+                                "         PKG_CAMDX.report_assessment_status(C.SCORE, C.STATUS) AS CURREENT_ASSESSMENT, \r\n"
+                                + //
+                                "         C.SCORE AS CURRENT_SCORE, PKG_CAMDX.report_status(C.STATUS) AS STATUS, '' AS GENDER, \r\n"
+                                + //
+                                "         '' AS DOB, \r\n" + //
+                                "         CASE WHEN C.TYPE IN (1, 3) THEN C.SINGLE_ID \r\n" + //
+                                "              ELSE C.TIN \r\n" + //
+                                "         END AS NATIONAL_ID, \r\n" + //
+                                "         C.COMPANY_NAME_KH AS CUSTOMER_NAME_KH, \r\n" + //
+                                "         CASE WHEN C.TYPE IN (1, 3) THEN 'Single ID' \r\n" + //
+                                "              ELSE 'Tax identification number (TIN)'\r\n" + //
+                                "         END AS LEGAL_DOC_NAME, \r\n" + //
+                                "         'CAMBODIA' AS NATIONALITY, 'KH' AS RESIDENCE, 'COMPANY'AS SECTOR, \r\n" + //
+                                "         PKG_CAMDX.get_branch_id(D.UNIT_ID) AS BRANCH_CODE, \r\n" + //
+                                "         '' AS ISSUED_DATE, '' AS EXPIRED_DATE, \r\n" + //
+                                "         'eKYB' AS REQUEST_TYPE, C.APP_CHANNEL, D.CREATED_TIME\r\n" + //
+                                "  FROM EKYB_PROFILE C, LOG_DATE D\r\n" + //
+                                "  WHERE C.ID = D.TABLE_ID \r\n" + //
+                                "        AND D.TABLE_NAME = 'EKYB_PROFILE'\r\n" + //
+                                ")X\r\n" + //
+                                "WHERE 1 = 1\r\n" + //
+                                "      AND ((TRIM(?) IS NULL) OR (X.CREATED_TIME >= ?))           --FROM_DATE\r\n" + //
+                                "      AND ((TRIM(?) IS NULL) OR (X.CREATED_TIME <= ?))           --TO_DATE\r\n" + //
+                                "      AND ((TRIM(?) IS NULL) OR (X.APP_CHANNEL = ?))             --APP_CHANNEL\r\n" + //
+                                "      AND ((TRIM(?) IS NULL) OR (X.REQUEST_TYPE = ?))            --REQUEST_TYPE\r\n" + //
+                                "ORDER BY X.CREATED_TIME ASC ";
+
+                return jdbcTemplate.query(sql, (rs, rowNum) -> {
+                        ReportFull reportFull = new ReportFull();
+                        
+                        reportFull.setId(rs.getString("ID_NUMBER"));
+                        reportFull.setCustomerNameEn(rs.getString("CUSTOMER_NAME_EN"));
+                        reportFull.setDateAssessment(rs.getString("DATE_ASSESSMENT"));
+                        reportFull.setCurrentAssessment(rs.getString("CURREENT_ASSESSMENT"));
+
+                        String scoreString = rs.getString("CURRENT_SCORE") == null ? "0"
+                                        : rs.getString("CURRENT_SCORE").isEmpty() ? "0" : rs.getString("CURRENT_SCORE");
+                        double score = Double.parseDouble(scoreString) * 100;
+                        reportFull.setCurrentScore(String.valueOf(score));
+                        
+                        reportFull.setStatus(rs.getString("STATUS"));
+                        reportFull.setGender(rs.getString("GENDER"));
+                        reportFull.setBirthDate(rs.getString("DOB"));
+                        reportFull.setNationality(rs.getString("NATIONALITY"));
+                        reportFull.setResidence(rs.getString("RESIDENCE"));
+                        reportFull.setSector(rs.getString("SECTOR"));
+                        reportFull.setBranchCode(rs.getString("BRANCH_CODE"));
+                        reportFull.setIssuedDate(rs.getString("ISSUED_DATE"));
+                        reportFull.setExpiredDate(rs.getString("EXPIRED_DATE"));
+
+                        reportFull.setRequestType(rs.getString("REQUEST_TYPE"));
+                        reportFull.setChannel(rs.getString("APP_CHANNEL"));
+
+                        return reportFull;
+                }, fromDate, fromDate, toDate, toDate, channel, channel, requestType, requestType);
         }
 
 }

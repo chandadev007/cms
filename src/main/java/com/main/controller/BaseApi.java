@@ -203,6 +203,11 @@ public class BaseApi {
                     yield ekycController.cms_107(data);
                 }
 
+                // cms_108: Report
+                case "cms_108" -> {
+                    yield ekycController.cms_108(data);
+                }
+
                 // cms_201: Ekyb create
                 case "cms_201" -> {
 

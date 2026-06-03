@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyc;
 import com.main.model.History;
+import com.main.model.ReportFull;
 import com.main.repository.EkycRepository;
 
 @Service
@@ -220,6 +221,15 @@ public class EkycService {
                     dob, issuedDate, expiredDate, type);
         } catch (Exception e) {
             logger.error("Error while fetching ekyc check exist : ", e);
+            throw new RuntimeException("Database error: " + e.getMessage());
+        }
+    }
+
+    public List<ReportFull> getFullReport(String fromDate, String toDate, String channel, String requestType) {
+        try {
+            return ekycRepository.getFullReport(fromDate, toDate, channel, requestType);
+        } catch (Exception e) {
+            logger.error("Error while fetching full report : ", e);
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }

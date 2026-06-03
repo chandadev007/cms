@@ -1,11 +1,37 @@
 package com.main.controller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.http.HttpHeaders;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +44,7 @@ import com.main.model.Ekyb;
 import com.main.model.Ekyc;
 import com.main.model.History;
 import com.main.model.Pagination;
+import com.main.model.ReportFull;
 import com.main.model.TemplateResponse;
 import com.main.model.TemplateResponseWithPagination;
 import com.main.service.DBLogService;
@@ -417,7 +444,7 @@ public class EkycController {
         }
     }
 
-    // cms_107
+    // cms_107: Dashboard summary
     public ResponseEntity<?> cms_107(JsonNode data) {
         try {
             String fromDate = data.path("fromDate").asText();
@@ -478,6 +505,264 @@ public class EkycController {
         } catch (Exception e) {
             return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error Internal Server");
         }
+    }
+
+    // cms_108: Full Report
+    public ResponseEntity<?> cms_108(JsonNode data) {
+        try {
+            String fromDate = data.path("fromDate").asText("");
+            String toDate = data.path("toDate").asText("");
+            String channel = data.path("channel").asText("");
+            String requestType = data.path("requestType").asText("");
+            String format = data.path("format").asText("");
+
+            if (fromDate.isEmpty() || toDate.isEmpty()) {
+                return buildErrorResponse(HttpStatus.OK, "Both fromDate and toDate are required.");
+            }
+
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate start = LocalDate.parse(fromDate, inputFormatter);
+            LocalDate end = LocalDate.parse(toDate, inputFormatter);
+            long monthsBetween = ChronoUnit.MONTHS.between(start, end);
+            // than 6 months
+            if (monthsBetween > 6 || (monthsBetween == 6 && start.plusMonths(6).isBefore(end))) {
+                return buildErrorResponse(HttpStatus.OK, "Date range cannot exceed 6 months.");
+            }
+
+            String dateRange = (fromDate != null && !fromDate.isEmpty()) && (toDate != null && !toDate.isEmpty())
+                    ? "From " + fromDate + " to " + toDate
+                    : (fromDate != null && !fromDate.isEmpty()) ? "From " + fromDate + " to now"
+                            : (toDate != null && !toDate.isEmpty()) ? "From start to " + toDate
+                                    : "From start to now";
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            if (fromDate != null && !fromDate.isEmpty())
+                fromDate = new SimpleDateFormat("yyyyMMddHHmm").format(dateFormat.parse(fromDate + " 00:00"));
+
+            if (toDate != null && !toDate.isEmpty())
+                toDate = new SimpleDateFormat("yyyyMMddHHmm").format(dateFormat.parse(toDate + " 23:59"));
+
+            // 2. Generate Excel file if format is excel
+            if ("excel".equalsIgnoreCase(format)) {
+                byte[] excelBytes;
+                List<ReportFull> fullReport = ekycService.getFullReport(fromDate, toDate, channel, requestType);
+
+                String templatePath = "file/template/Template_Customer_Risk_Report.xlsx";
+                try (InputStream fileInputStream = new FileInputStream(templatePath);
+                        Workbook templateWorkbook = new XSSFWorkbook(fileInputStream);
+                        SXSSFWorkbook workbook = new SXSSFWorkbook((XSSFWorkbook) templateWorkbook, 100);
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
+                    Sheet sheet = workbook.getSheetAt(0);
+                    Font commonFont = templateWorkbook.createFont();
+                    commonFont.setFontName("Times New Roman");
+                    commonFont.setFontHeightInPoints((short) 11);
+
+                    Font headerFont = templateWorkbook.createFont();
+                    headerFont.setFontName("Times New Roman");
+                    headerFont.setFontHeightInPoints((short) 12);
+                    headerFont.setBold(true);
+
+                    CellStyle commonStyle = templateWorkbook.createCellStyle();
+                    commonStyle.setFont(commonFont);
+                    commonStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                    // Set report title
+                    sheet.createRow(1).createCell(1).setCellValue("Date:");
+                    sheet.getRow(1).getCell(1).setCellStyle(commonStyle);
+                    sheet.getRow(1).createCell(2).setCellValue(dateRange);
+                    sheet.getRow(1).getCell(2).setCellStyle(commonStyle);
+
+                    sheet.createRow(2).createCell(1).setCellValue("Source:");
+                    sheet.getRow(2).getCell(1).setCellStyle(commonStyle);
+                    sheet.getRow(2).createCell(2)
+                            .setCellValue(channel != null && !channel.isEmpty() ? channel : "All sources");
+                    sheet.getRow(2).getCell(2).setCellStyle(commonStyle);
+
+                    sheet.createRow(3).createCell(1).setCellValue("Type:");
+                    sheet.getRow(3).getCell(1).setCellStyle(commonStyle);
+                    sheet.getRow(3).createCell(2).setCellValue(
+                            requestType != null && !requestType.isEmpty() ? requestType : "All (eKYC & eKYB)");
+                    sheet.getRow(3).getCell(2).setCellStyle(commonStyle);
+
+                    // Create header style
+                    CellStyle tableHeaderStyle = templateWorkbook.createCellStyle();
+                    tableHeaderStyle.setFont(headerFont);
+                    tableHeaderStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                    tableHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    tableHeaderStyle.setAlignment(HorizontalAlignment.CENTER);
+                    tableHeaderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                    tableHeaderStyle.setBorderTop(BorderStyle.THIN);
+                    tableHeaderStyle.setBorderBottom(BorderStyle.THIN);
+                    tableHeaderStyle.setBorderLeft(BorderStyle.THIN);
+                    tableHeaderStyle.setBorderRight(BorderStyle.THIN);
+                    tableHeaderStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+                    tableHeaderStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+                    tableHeaderStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+                    tableHeaderStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+
+                    // Create header row
+                    sheet.createRow(4).createCell(0).setCellValue("No.");
+                    sheet.getRow(4).createCell(1).setCellValue("Id");
+                    sheet.getRow(4).createCell(2).setCellValue("Customer name EN");
+                    sheet.getRow(4).createCell(3).setCellValue("Date assessment");
+                    sheet.getRow(4).createCell(4).setCellValue("Current assessment");
+                    sheet.getRow(4).createCell(5).setCellValue("Current score");
+                    sheet.getRow(4).createCell(6).setCellValue("Status");
+                    sheet.getRow(4).createCell(7).setCellValue("Gender");
+                    sheet.getRow(4).createCell(8).setCellValue("Birth date");
+                    sheet.getRow(4).createCell(9).setCellValue("National ID");
+                    sheet.getRow(4).createCell(10).setCellValue("Customer name KH");
+                    sheet.getRow(4).createCell(11).setCellValue("LEGAL DOCUMENT NAME");
+                    sheet.getRow(4).createCell(12).setCellValue("Nationality");
+                    sheet.getRow(4).createCell(13).setCellValue("Residence");
+                    sheet.getRow(4).createCell(14).setCellValue("Sector");
+                    sheet.getRow(4).createCell(15).setCellValue("Branch code");
+                    sheet.getRow(4).createCell(16).setCellValue("Legal Issue Date");
+                    sheet.getRow(4).createCell(17).setCellValue("Legal Expire Date");
+
+                    for (int i = 0; i <= 17; i++) {
+                        sheet.getRow(4).getCell(i).setCellStyle(tableHeaderStyle);
+                    }
+
+                    // Create table cell style
+                    CellStyle tableStyle = templateWorkbook.createCellStyle();
+                    tableStyle.setFont(commonFont);
+                    tableStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                    tableStyle.setBorderTop(BorderStyle.THIN);
+                    tableStyle.setBorderBottom(BorderStyle.THIN);
+                    tableStyle.setBorderLeft(BorderStyle.THIN);
+                    tableStyle.setBorderRight(BorderStyle.THIN);
+                    tableStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+                    tableStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+                    tableStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+                    tableStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+
+                    int rowIndex = 5; // Starting row index for data population (assuming header is in row 4)
+                    int index = 1;
+                    // Populate data rows
+                    for (ReportFull report : fullReport) {
+
+                        sheet.createRow(rowIndex).createCell(0).setCellValue(index++);
+                        sheet.getRow(rowIndex).createCell(1).setCellValue(report.getId());
+                        sheet.getRow(rowIndex).createCell(2).setCellValue(report.getCustomerNameEn());
+                        sheet.getRow(rowIndex).createCell(3).setCellValue(report.getDateAssessment());
+                        sheet.getRow(rowIndex).createCell(4).setCellValue(report.getCurrentAssessment());
+                        sheet.getRow(rowIndex).createCell(5).setCellValue(report.getCurrentScore());
+                        sheet.getRow(rowIndex).createCell(6).setCellValue(report.getStatus());
+                        sheet.getRow(rowIndex).createCell(7).setCellValue(report.getGender());
+                        sheet.getRow(rowIndex).createCell(8).setCellValue(report.getBirthDate());
+                        sheet.getRow(rowIndex).createCell(9).setCellValue(report.getNationalId());
+                        sheet.getRow(rowIndex).createCell(10).setCellValue(report.getCustomerNameKh());
+                        sheet.getRow(rowIndex).createCell(11).setCellValue(report.getLegalDocName());
+                        sheet.getRow(rowIndex).createCell(12).setCellValue(report.getNationality());
+                        sheet.getRow(rowIndex).createCell(13).setCellValue(report.getResidence());
+                        sheet.getRow(rowIndex).createCell(14).setCellValue(report.getSector());
+                        sheet.getRow(rowIndex).createCell(15).setCellValue(report.getBranchCode());
+                        sheet.getRow(rowIndex).createCell(16).setCellValue(report.getIssuedDate());
+                        sheet.getRow(rowIndex).createCell(17).setCellValue(report.getExpiredDate());
+
+                        for (int i = 0; i <= 17; i++) {
+                            sheet.getRow(rowIndex).getCell(i).setCellStyle(tableStyle);
+                        }
+                        rowIndex++;
+                    }
+                    workbook.write(bos);
+                    excelBytes = bos.toByteArray();
+
+                    // Temporary disk files cleaning for SXSSF
+                    workbook.dispose();
+                }
+                String outFileName = "Report_Full_"
+                        + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".xlsx";
+                return ResponseEntity.ok()
+                        .contentType(MediaType
+                                .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                        .header("Content-Disposition",
+                                "attachment; filename=\"" + outFileName + "\"")
+                        .header("Cache-Control", "must-revalidate, post-check=0, pre-check=0")
+                        .body(excelBytes);
+            }
+            // csv format is not implemented yet, return not implemented message
+            else if ("csv".equalsIgnoreCase(format)) {
+                List<ReportFull> fullReport = ekycService.getFullReport(fromDate, toDate, channel, requestType);
+                byte[] csvBytes;
+
+                String outFileName = "Report_Full_"
+                        + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".csv";
+
+                // 1. Build the CSV contents in memory
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        // Explicitly use UTF-8 to protect international strings like Khmer text
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(bos, StandardCharsets.UTF_8))) {
+
+                    // Write Byte Order Mark (BOM) so Excel reads UTF-8 characters properly
+                    writer.write('\ufeff');
+
+                    writer.println("RISK MANAGEMENT | Index");
+                    writer.println(",Date:," + dateRange);
+                    writer.println(",Source:," + (channel != null && !channel.isEmpty() ? channel : "All sources"));
+                    writer.println(",Type:," + (requestType != null && !requestType.isEmpty() ? requestType : "All (eKYC & eKYB)"));
+
+                    // 2. Add CSV Header Row
+                    writer.println(
+                            "No.,Id,Customer name EN,Date assessment,Current assessment,Current Score,Status,Gender,Birth date,National ID,Customer name KH,LEGAL DOCUMENT NAME,Nationality,Residence,Sector,Branch code,Legal Issued Date,Legal Expired Date");
+
+                    int index = 1;
+                    // 3. Loop and add data lines
+                    for (ReportFull report : fullReport) {
+                        writer.println(String.join(",",
+                                String.valueOf(index++),
+                                escapeCsv(report.getId()),
+                                escapeCsv(report.getCustomerNameEn()),
+                                escapeCsv(report.getDateAssessment()),
+                                escapeCsv(report.getCurrentAssessment()),
+                                escapeCsv(report.getCurrentScore()),
+                                escapeCsv(report.getStatus()),
+                                escapeCsv(report.getGender()),
+                                escapeCsv(report.getBirthDate()),
+                                escapeCsv(report.getNationalId()),
+                                escapeCsv(report.getCustomerNameKh()),
+                                escapeCsv(report.getLegalDocName()),
+                                escapeCsv(report.getNationality()),
+                                escapeCsv(report.getResidence()),
+                                escapeCsv(report.getSector()),
+                                escapeCsv(report.getBranchCode()),
+                                escapeCsv(report.getIssuedDate()),
+                                escapeCsv(report.getExpiredDate())));
+                    }
+
+                    writer.flush();
+                    csvBytes = bos.toByteArray();
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating CSV file");
+                }
+
+                // 4. Return the file download with corrected content types and body payload
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                        .header("Content-Disposition", "attachment; filename=\"" + outFileName + "\"")
+                        .header("Cache-Control", "must-revalidate, post-check=0, pre-check=0")
+                        .body(csvBytes); // Fixed: Changed from excelBytes to csvBytes
+            } else {
+                return buildErrorResponse(HttpStatus.BAD_REQUEST,
+                        "Invalid format specified. Supported formats are 'excel' and 'csv'.");
+            }
+        } catch (Exception e) {
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error Internal Server");
+        }
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String cleanValue = value.replace("\n", " ").replace("\r", " ");
+        if (cleanValue.contains(",") || cleanValue.contains("\"") || cleanValue.contains("'")) {
+            cleanValue = cleanValue.replace("\"", "\"\"");
+            return "\"" + cleanValue + "\"";
+        }
+        return cleanValue;
     }
 
     // default response error builder
