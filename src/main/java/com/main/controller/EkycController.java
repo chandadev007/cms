@@ -2,11 +2,9 @@ package com.main.controller;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.http.HttpHeaders;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -17,21 +15,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +49,8 @@ import com.main.service.EkycService;
 import com.main.service.FileManagementService;
 
 public class EkycController {
+
+    private static final Logger logger = LoggerFactory.getLogger(EkycController.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final EkycService ekycService;
@@ -547,7 +545,12 @@ public class EkycController {
                 byte[] excelBytes;
                 List<ReportFull> fullReport = ekycService.getFullReport(fromDate, toDate, channel, requestType);
 
-                String templatePath = "file/template/Template_Customer_Risk_Report.xlsx";
+                String templateDir = System.getenv("TEMPLATE_DIR");
+                if (templateDir == null || templateDir.isEmpty()) {
+                    templateDir = "file/template";
+                }
+                String templatePath = templateDir + "/Template_Customer_Risk_Report.xlsx";
+                
                 try (InputStream fileInputStream = new FileInputStream(templatePath);
                         Workbook templateWorkbook = new XSSFWorkbook(fileInputStream);
                         SXSSFWorkbook workbook = new SXSSFWorkbook((XSSFWorkbook) templateWorkbook, 100);
@@ -702,7 +705,8 @@ public class EkycController {
                     writer.println("RISK MANAGEMENT | Index");
                     writer.println(",Date:," + dateRange);
                     writer.println(",Source:," + (channel != null && !channel.isEmpty() ? channel : "All sources"));
-                    writer.println(",Type:," + (requestType != null && !requestType.isEmpty() ? requestType : "All (eKYC & eKYB)"));
+                    writer.println(",Type:,"
+                            + (requestType != null && !requestType.isEmpty() ? requestType : "All (eKYC & eKYB)"));
 
                     // 2. Add CSV Header Row
                     writer.println(
@@ -749,6 +753,7 @@ public class EkycController {
                         "Invalid format specified. Supported formats are 'excel' and 'csv'.");
             }
         } catch (Exception e) {
+            logger.error("Error Internal Server: ", e);
             return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error Internal Server");
         }
     }

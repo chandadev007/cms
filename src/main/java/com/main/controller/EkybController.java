@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ import com.main.service.EkybService;
 import com.main.service.EkycService;
 
 public class EkybController {
+    private static final Logger logger = LoggerFactory.getLogger(EkybController.class);
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final EkycService ekycService;
     private final EkybService ekybService;
@@ -571,6 +575,7 @@ public class EkybController {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of("error", "1", "errorDetail", "Customer not exsit"));
         } catch (Exception e) {
+            logger.error("Error Internal Server: ", e);
             return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error Internal Server");
         }
     }

@@ -20,9 +20,19 @@ RUN rm -rf webapps/*
 # Copy the generated WAR file from Stage 1 to Tomcat's webapps directory
 COPY --from=build /app/target/cms-0.0.1-SNAPSHOT.war webapps/ROOT.war
 
+# -------------------------------------------------------------
+# ADDED: Copy your local 'file' directory into Tomcat's root directory
+# This places it at /usr/local/tomcat/file/template/...
+# -------------------------------------------------------------
+COPY file/ ./file/
+
+# -------------------------------------------------------------
+# ADDED: Set the environment variable for Tomcat
+# Tomcat starts inside /usr/local/tomcat, so the absolute path is below
+# -------------------------------------------------------------
+ENV TEMPLATE_DIR=/usr/local/tomcat/file/template
+
 # Document the standard port Tomcat listens on
-# NOTE: Tomcat defaults to 8080 internally. If you want it to listen on 8084, 
-# you must map it during 'docker run' or change Tomcat's server.xml config.
 EXPOSE 8080
 
 # Launch the Tomcat container
