@@ -59,6 +59,7 @@ public class EkybRepository {
                                                 new SqlParameter("IN_TYPE", Types.NVARCHAR),
                                                 new SqlParameter("IN_NOTE", Types.NVARCHAR),
                                                 new SqlParameter("IN_ERROR_DETAIL", Types.VARCHAR),
+                                                new SqlParameter("IN_APP_CHANNEL", Types.VARCHAR),
                                                 new SqlOutParameter("P_RESULT", Types.VARCHAR),
                                                 new SqlOutParameter("OUT_ID", Types.VARCHAR));
 
@@ -83,7 +84,7 @@ public class EkybRepository {
         }
 
         public String createEkyb(String singleId, String tin, String nameKH, String nameEn, String dirListJson,
-                        String type, String note, String errorDetail) {
+                        String type, String note, String errorDetail, String appChannel) {
                 MapSqlParameterSource in = new MapSqlParameterSource()
                                 .addValue("IN_SINGLE_ID", singleId)
                                 .addValue("IN_TIN", tin)
@@ -92,7 +93,8 @@ public class EkybRepository {
                                 .addValue("IN_DIR_LIST_JSON", dirListJson)
                                 .addValue("IN_TYPE", type)
                                 .addValue("IN_NOTE", note)
-                                .addValue("IN_ERROR_DETAIL", errorDetail);
+                                .addValue("IN_ERROR_DETAIL", errorDetail)
+                                .addValue("IN_APP_CHANNEL", appChannel);
 
                 Map<String, Object> responseMap = new HashMap<>();
                 try {

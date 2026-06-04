@@ -26,11 +26,11 @@ public class EkybService {
     }
 
     public String createEkyb(String singleId, String tin, String nameKH, String nameEn, String dirListJson,
-            String type, String note) {
+            String type, String note, String appChannel) {
         logger.info("Initiating Ekyb creation for: {}", singleId + tin);
         try {
             String outParams = ekybRepository.createEkyb(singleId, tin, nameKH, nameEn, dirListJson, type, note,
-                    null);
+                    null, appChannel);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
             Map<String, Object> response = new HashMap<>();

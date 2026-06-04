@@ -28,11 +28,11 @@ public class EkycService {
 
     public String createEkyc(String idNumber, String firstNameKh, String lastNameKh, String firstNameEn,
             String lastNameEn, String gender, String dob, String issuedDae, String expiredDate, String note,
-            String type, String selfiePath) {
+            String type, String selfiePath, String appChannel) {
         logger.info("Initiating Ekyc creation for: {}", idNumber);
         try {
             String outParams = ekycRepository.createEkyc(idNumber, firstNameKh, lastNameKh, firstNameEn, lastNameEn,
-                    gender, dob, issuedDae, expiredDate, note, type, selfiePath, null);
+                    gender, dob, issuedDae, expiredDate, note, type, selfiePath, null, appChannel);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
             Map<String, Object> response = new HashMap<>();

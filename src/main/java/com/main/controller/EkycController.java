@@ -139,7 +139,8 @@ public class EkycController {
 
             // create ekyc
             String ekycResult = ekycService.createEkyc(idNumber, firstNameKh, lastNameKh,
-                    firstNameEn, lastNameEn, gender, dob, issuedDate, expiredDate, note, type, selfiePath);
+                    firstNameEn, lastNameEn, gender, dob, issuedDate, expiredDate, note, type, selfiePath,
+                    "Web Protal");
 
             JsonNode ekycResultJson = objectMapper.readTree(ekycResult);
             String pResult = ekycResultJson.path("p_result").asText();
@@ -153,7 +154,7 @@ public class EkycController {
 
             // log process
             dbLogService.createEkycLog("Create", "USER", outId, unitCode, userId,
-                    userName);
+                    userName, "Web Protal");
 
             // process executed successfully
             return ResponseEntity.ok()
@@ -550,7 +551,7 @@ public class EkycController {
                     templateDir = "file/template";
                 }
                 String templatePath = templateDir + "/Template_Customer_Risk_Report.xlsx";
-                
+
                 try (InputStream fileInputStream = new FileInputStream(templatePath);
                         Workbook templateWorkbook = new XSSFWorkbook(fileInputStream);
                         SXSSFWorkbook workbook = new SXSSFWorkbook((XSSFWorkbook) templateWorkbook, 100);

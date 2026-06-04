@@ -47,6 +47,7 @@ public class DBLogRepository {
                         new SqlParameter("IN_UNIT_ID", Types.VARCHAR),
                         new SqlParameter("IN_USER_ID", Types.VARCHAR),
                         new SqlParameter("IN_USER_NAME", Types.VARCHAR),
+                        new SqlParameter("IN_APP_CHANNEL", Types.VARCHAR),
                         new SqlOutParameter("P_RESULT", Types.VARCHAR));
 
         this.ekybLogCall = new SimpleJdbcCall(jdbcTemplate)
@@ -60,17 +61,19 @@ public class DBLogRepository {
                         new SqlParameter("IN_UNIT_ID", Types.VARCHAR),
                         new SqlParameter("IN_USER_ID", Types.VARCHAR),
                         new SqlParameter("IN_USER_NAME", Types.VARCHAR),
+                        new SqlParameter("IN_APP_CHANNEL", Types.VARCHAR),
                         new SqlOutParameter("P_RESULT", Types.VARCHAR));
     }
 
     public String createEkycLog(String actionName, String actionType, String tableId, String unitId, String userId,
-            String userName) {
+            String userName, String appChannel) {
         MapSqlParameterSource in = new MapSqlParameterSource()
                 .addValue("IN_ACTION_NAME", actionName)
                 .addValue("IN_ACTION_TYPE", actionType)
                 .addValue("IN_TABLE_ID", tableId)
                 .addValue("IN_UNIT_ID", unitId)
                 .addValue("IN_USER_ID", userId)
+                .addValue("IN_APP_CHANNEL", appChannel)
                 .addValue("IN_USER_NAME", userName);
 
         Map<String, Object> responseMap = new HashMap<>();
@@ -78,7 +81,7 @@ public class DBLogRepository {
             Map<String, Object> out = ekycLogCall.execute(in);
 
             responseMap.put("p_result", out.get("P_RESULT"));
-            
+
             // Return as JSON string
             return objectMapper.writeValueAsString(responseMap);
         } catch (Exception e) {
@@ -89,13 +92,14 @@ public class DBLogRepository {
     }
 
     public String createEkybLog(String actionName, String actionType, String tableId, String unitId, String userId,
-            String userName) {
+            String userName, String appChannel) {
         MapSqlParameterSource in = new MapSqlParameterSource()
                 .addValue("IN_ACTION_NAME", actionName)
                 .addValue("IN_ACTION_TYPE", actionType)
                 .addValue("IN_TABLE_ID", tableId)
                 .addValue("IN_UNIT_ID", unitId)
                 .addValue("IN_USER_ID", userId)
+                .addValue("IN_APP_CHANNEL", appChannel)
                 .addValue("IN_USER_NAME", userName);
 
         Map<String, Object> responseMap = new HashMap<>();

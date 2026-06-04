@@ -23,10 +23,10 @@ public class DBLogService {
     }
 
     public String createEkycLog(String actionName, String actionType, String tableId, String unitId, String userId,
-            String userName) {
+            String userName, String appChannel) {
         logger.info("Initiating Ekyc creation for: {}", actionName);
         try {
-            String outParams = dbLogRepository.createEkycLog(actionName, actionType, tableId, unitId, userId, userName);
+            String outParams = dbLogRepository.createEkycLog(actionName, actionType, tableId, unitId, userId, userName, appChannel);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
             Map<String, Object> response = new HashMap<>();
@@ -46,10 +46,10 @@ public class DBLogService {
     }
 
     public String createEkybLog(String actionName, String actionType, String tableId, String unitId, String userId,
-            String userName) {
+            String userName, String appChannel) {
         logger.info("Initiating Ekyb creation for: {}", actionName);
         try {
-            String outParams = dbLogRepository.createEkybLog(actionName, actionType, tableId, unitId, userId, userName);
+            String outParams = dbLogRepository.createEkybLog(actionName, actionType, tableId, unitId, userId, userName, appChannel);
 
             JsonNode jsonNode = objectMapper.readTree(outParams);
             Map<String, Object> response = new HashMap<>();

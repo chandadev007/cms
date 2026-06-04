@@ -87,7 +87,7 @@ public class EkybController {
 
             // start do process
             String ekycResult = ekybService.createEkyb(singleId, tin, companyNameKh, companyNameEn, dirList.toString(),
-                    type, note);
+                    type, note, "Web Protal");
             JsonNode ekycResultJson = objectMapper.readTree(ekycResult);
 
             String pResult = ekycResultJson.path("p_result").asText();
@@ -100,7 +100,7 @@ public class EkybController {
             }
 
             // log process
-            dbLogService.createEkybLog("Create", "USER", outId, unitCode, userId, userName);
+            dbLogService.createEkybLog("Create", "USER", outId, unitCode, userId, userName, "Web Protal");
 
             // process executed successfully
             return ResponseEntity.ok()

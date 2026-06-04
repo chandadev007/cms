@@ -62,6 +62,7 @@ public class EkycRepository {
                                                 new SqlParameter("IN_TYPE", Types.VARCHAR),
                                                 new SqlParameter("IN_SELFIE_PATH", Types.NVARCHAR),
                                                 new SqlParameter("IN_ERROR_DETAIL", Types.VARCHAR),
+                                                new SqlParameter("IN_APP_CHANNEL", Types.VARCHAR),
                                                 new SqlOutParameter("P_RESULT", Types.VARCHAR),
                                                 new SqlOutParameter("OUT_ID", Types.VARCHAR));
 
@@ -102,7 +103,7 @@ public class EkycRepository {
 
         public String createEkyc(String idNumber, String firstNameKh, String lastNameKh, String firstNameEn,
                         String lastNameEn, String gender, String dob, String issuedDae, String expiredDate, String note,
-                        String type, String selfiePath, String errorDetail) {
+                        String type, String selfiePath, String errorDetail, String appChannel) {
                 MapSqlParameterSource in = new MapSqlParameterSource()
                                 .addValue("IN_ID_NUMBER", idNumber)
                                 .addValue("IN_FIRST_NAME_KH", firstNameKh)
@@ -116,7 +117,8 @@ public class EkycRepository {
                                 .addValue("IN_NOTE", note)
                                 .addValue("IN_TYPE", type)
                                 .addValue("IN_SELFIE_PATH", selfiePath)
-                                .addValue("IN_ERROR_DETAIL", errorDetail);
+                                .addValue("IN_ERROR_DETAIL", errorDetail)
+                                .addValue("IN_APP_CHANNEL", appChannel);
 
                 Map<String, Object> responseMap = new HashMap<>();
                 try {
@@ -850,6 +852,9 @@ public class EkycRepository {
                         reportFull.setStatus(rs.getString("STATUS"));
                         reportFull.setGender(rs.getString("GENDER"));
                         reportFull.setBirthDate(rs.getString("DOB"));
+                        reportFull.setNationalId(rs.getString("NATIONAL_ID"));
+                        reportFull.setCustomerNameKh(rs.getString("CUSTOMER_NAME_KH"));
+                        reportFull.setLegalDocName(rs.getString("LEGAL_DOC_NAME"));
                         reportFull.setNationality(rs.getString("NATIONALITY"));
                         reportFull.setResidence(rs.getString("RESIDENCE"));
                         reportFull.setSector(rs.getString("SECTOR"));

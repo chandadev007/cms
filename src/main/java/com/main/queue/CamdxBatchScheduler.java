@@ -50,7 +50,7 @@ public class CamdxBatchScheduler {
                             // Update status in DB
                             ekycService.updateToProcessing(ekyc.getId());
                             dbLogService.createEkycLog("update status to processing by worker", "SYSTEM", ekyc.getId(),
-                                    null, null, null);
+                                    null, null, null, ekyc.getAppChannel());
 
                             ekycGatewayWorker.sendToEkycVerifyInfo(ekyc);
                         }
@@ -61,7 +61,7 @@ public class CamdxBatchScheduler {
                             ekycService.updateToProcessing(ekyc.getId());
                             dbLogService.createEkycLog("update status to processing by worker", "SYSTEM",
                                     ekyc.getId(),
-                                    null, null, null);
+                                    null, null, null, ekyc.getAppChannel());
 
                             ekycGatewayWorker.sendToEkycVerifyFace(ekyc);
                         }
@@ -87,7 +87,7 @@ public class CamdxBatchScheduler {
                             // Update status in DB
                             ekybService.updateToProcessing(ekyb.getId());
                             dbLogService.createEkybLog("update status to processing by worker", "SYSTEM", ekyb.getId(),
-                                    null, null, null);
+                                    null, null, null, ekyb.getAppChannel());
 
                             ekybGatewayWorker.sendToEkybVerifyBasicInfo(ekyb);
                         }
@@ -96,7 +96,7 @@ public class CamdxBatchScheduler {
                             // Update status in DB
                             ekybService.updateToProcessing(ekyb.getId());
                             dbLogService.createEkybLog("update status to processing by worker", "SYSTEM", ekyb.getId(),
-                                    null, null, null);
+                                    null, null, null, ekyb.getAppChannel());
 
                             ekybGatewayWorker.sendToEkybVerifyWithTIN(ekyb);
                         }

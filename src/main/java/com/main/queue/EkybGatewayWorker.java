@@ -61,8 +61,9 @@ public class EkybGatewayWorker {
                             .body(JsonNode.class);
                     if (responseNode == null)
                         throw new RuntimeException("Empty response from gateway Ekyb verify basic infor");
-                    
-                    logger.info("Received response from Ekyb verify basic info for Ekyb ID: {}: {}", ekyb.getId(), responseNode.toString());
+
+                    logger.info("Received response from Ekyb verify basic info for Ekyb ID: {}: {}", ekyb.getId(),
+                            responseNode.toString());
                     String code = responseNode.path("code").asText();
                     switch (code) {
                         case "0", "00" -> {
@@ -81,14 +82,14 @@ public class EkybGatewayWorker {
                                 dbLogService.createEkybLog("update status to success by worker", "SYSTEM", ekyb.getId(),
                                         null,
                                         null,
-                                        null);
+                                        null, ekyb.getAppChannel());
                             } else {
                                 ekybService.updateFinalStatus(ekyb.getId(), "3", "0",
                                         "got invalid score {\"" + score + "\"} from Camdx");
                                 dbLogService.createEkybLog("update status to success by worker", "SYSTEM", ekyb.getId(),
                                         null,
                                         null,
-                                        null);
+                                        null, ekyb.getAppChannel());
                             }
                         }
                         case "01" -> {
@@ -97,7 +98,7 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                         case "02" -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "4", "0",
@@ -105,13 +106,13 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                         case "03" -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "2", "0", "customer not exist");
                             dbLogService.createEkybLog("update status to not found by worker", "SYSTEM", ekyb.getId(),
                                     null,
-                                    null, null);
+                                    null, null, ekyb.getAppChannel());
                         }
                         default -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "4", "0",
@@ -119,14 +120,16 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                     }
                 } else {
-                    logger.error("MediaType.APPLICATION_JSON is null in EkybGatewayWorker for Ekyb ID: {}", ekyb.getId());
+                    logger.error("MediaType.APPLICATION_JSON is null in EkybGatewayWorker for Ekyb ID: {}",
+                            ekyb.getId());
                 }
             } else {
-                logger.error("Ekyb verify basic URL is not configured in EkybGatewayWorker for Ekyb ID: {}", ekyb.getId());
+                logger.error("Ekyb verify basic URL is not configured in EkybGatewayWorker for Ekyb ID: {}",
+                        ekyb.getId());
             }
         } catch (Exception e) {
             logger.error("Exception in EkybGatewayWorker for Ekyb ID: {}: {}", ekyb.getId(), e.getMessage(), e);
@@ -135,7 +138,7 @@ public class EkybGatewayWorker {
                     "gateway timeout");
             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(), null,
                     null,
-                    null);
+                    null, ekyb.getAppChannel());
         }
     }
 
@@ -165,7 +168,8 @@ public class EkybGatewayWorker {
                     if (responseNode == null)
                         throw new RuntimeException("Empty response from gateway Ekyb verify basic infor");
 
-                    logger.info("Received response from Ekyb verify with TIN for Ekyb ID: {}: {}", ekyb.getId(), responseNode.toString());
+                    logger.info("Received response from Ekyb verify with TIN for Ekyb ID: {}: {}", ekyb.getId(),
+                            responseNode.toString());
                     String code = responseNode.path("code").asText();
                     switch (code) {
                         case "0", "00" -> {
@@ -183,14 +187,14 @@ public class EkybGatewayWorker {
                                 dbLogService.createEkybLog("update status to success by worker", "SYSTEM", ekyb.getId(),
                                         null,
                                         null,
-                                        null);
+                                        null, ekyb.getAppChannel());
                             } else {
                                 ekybService.updateFinalStatus(ekyb.getId(), "3", "0",
                                         "got invalid score {\"" + score + "\"} from Camdx");
                                 dbLogService.createEkybLog("update status to success by worker", "SYSTEM", ekyb.getId(),
                                         null,
                                         null,
-                                        null);
+                                        null, ekyb.getAppChannel());
                             }
                         }
                         case "01" -> {
@@ -199,7 +203,7 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                         case "02" -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "4", "0",
@@ -207,13 +211,13 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                         case "03" -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "2", "0", "customer not exist");
                             dbLogService.createEkybLog("update status to not found by worker", "SYSTEM", ekyb.getId(),
                                     null,
-                                    null, null);
+                                    null, null, ekyb.getAppChannel());
                         }
                         default -> {
                             ekybService.updateFinalStatus(ekyb.getId(), "4", "0",
@@ -221,23 +225,28 @@ public class EkybGatewayWorker {
                             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(),
                                     null,
                                     null,
-                                    null);
+                                    null, ekyb.getAppChannel());
                         }
                     }
                 } else {
-                    logger.error("MediaType.APPLICATION_JSON is null in EkybGatewayWorker for TIN verification for Ekyb ID: {}", ekyb.getId());
+                    logger.error(
+                            "MediaType.APPLICATION_JSON is null in EkybGatewayWorker for TIN verification for Ekyb ID: {}",
+                            ekyb.getId());
                 }
             } else {
-                logger.error("Ekyb verify basic URL is not configured in EkybGatewayWorker for TIN verification for Ekyb ID: {}", ekyb.getId());
+                logger.error(
+                        "Ekyb verify basic URL is not configured in EkybGatewayWorker for TIN verification for Ekyb ID: {}",
+                        ekyb.getId());
             }
         } catch (Exception e) {
-            logger.error("Exception in EkybGatewayWorker for TIN verification for Ekyb ID: {}: {}", ekyb.getId(), e.getMessage(), e);
+            logger.error("Exception in EkybGatewayWorker for TIN verification for Ekyb ID: {}: {}", ekyb.getId(),
+                    e.getMessage(), e);
 
             ekybService.updateFinalStatus(ekyb.getId(), "4", "0",
                     "gateway timeout");
             dbLogService.createEkybLog("update status to failed by worker", "SYSTEM", ekyb.getId(), null,
                     null,
-                    null);
+                    null, ekyb.getAppChannel());
         }
     }
 

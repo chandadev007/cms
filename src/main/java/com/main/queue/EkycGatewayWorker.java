@@ -99,7 +99,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         } else {
                                                                 ekycService.updateFinalStatus(ekyc.getId(),
                                                                                 ekyc.getIdNumber(), "3",
@@ -111,7 +111,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         }
                                                 }
                                                 case "01" -> {
@@ -121,7 +121,7 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 case "02" -> {
                                                         ekycService.updateFinalStatus(ekyc.getId(), ekyc.getIdNumber(),
@@ -130,7 +130,7 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 case "03" -> {
                                                         ekycService.updateFinalStatus(ekyc.getId(), ekyc.getIdNumber(),
@@ -140,7 +140,7 @@ public class EkycGatewayWorker {
                                                                         "update status to not found by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 default -> {
                                                         ekycService.updateFinalStatus(ekyc.getId(), ekyc.getIdNumber(),
@@ -149,23 +149,26 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                         }
                                 } else {
-                                        logger.error("MediaType.APPLICATION_JSON is null in EkycGatewayWorker for basic info verification for Ekyc ID: {}", ekyc.getId());
+                                        logger.error("MediaType.APPLICATION_JSON is null in EkycGatewayWorker for basic info verification for Ekyc ID: {}",
+                                                        ekyc.getId());
                                 }
                         } else {
-                                logger.error("Ekyc verify basic URL is not configured in EkycGatewayWorker for basic info verification for Ekyc ID: {}", ekyc.getId());
+                                logger.error("Ekyc verify basic URL is not configured in EkycGatewayWorker for basic info verification for Ekyc ID: {}",
+                                                ekyc.getId());
                         }
                 } catch (Exception e) {
-                        logger.error("Exception in EkycGatewayWorker for basic info verification for Ekyc ID: {}: {}", ekyc.getId(), e.getMessage(), e);
+                        logger.error("Exception in EkycGatewayWorker for basic info verification for Ekyc ID: {}: {}",
+                                        ekyc.getId(), e.getMessage(), e);
 
                         ekycService.updateFinalStatus(ekyc.getId(), ekyc.getIdNumber(), "4", "0",
                                         "gateway timeout");
                         dbLogService.createEkycLog("update status to failed by worker", "SYSTEM",
                                         ekyc.getId(), null,
-                                        null, null);
+                                        null, null, ekyc.getAppChannel());
                 }
         }
 
@@ -181,7 +184,7 @@ public class EkycGatewayWorker {
                                                 "file management gateway timeout");
                                 dbLogService.createEkycLog("update status to failed by worker", "SYSTEM", ekyc.getId(),
                                                 null,
-                                                null, null);
+                                                null, null, ekyc.getAppChannel());
                                 e.printStackTrace();
                         }
 
@@ -214,7 +217,8 @@ public class EkycGatewayWorker {
                                                 throw new RuntimeException(
                                                                 "Empty response from gateway Ekyc verify face");
 
-                                        logger.info("Received response from Ekyc verify face for Ekyc ID: {}: {}", ekyc.getId(), responseNode.toString());
+                                        logger.info("Received response from Ekyc verify face for Ekyc ID: {}: {}",
+                                                        ekyc.getId(), responseNode.toString());
                                         String code = responseNode.path("code").asText();
                                         switch (code) {
                                                 case "0", "00" -> {
@@ -246,7 +250,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         } else if (isNumericScore(score)
                                                                         && !isNumericScore(faceScore)) {
 
@@ -260,7 +264,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         } else if (!isNumericScore(score)
                                                                         && isNumericScore(faceScore)) {
 
@@ -274,7 +278,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         } else {
                                                                 ekycService.updateFinalFace(ekyc.getId(),
                                                                                 ekyc.getIdNumber(), "3",
@@ -286,7 +290,7 @@ public class EkycGatewayWorker {
                                                                                 "update status to success by worker",
                                                                                 "SYSTEM", ekyc.getId(), null,
                                                                                 null,
-                                                                                null);
+                                                                                null, ekyc.getAppChannel());
                                                         }
                                                 }
                                                 case "01" -> {
@@ -296,7 +300,7 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 case "02" -> {
                                                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(),
@@ -305,7 +309,7 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 case "03" -> {
                                                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(),
@@ -315,7 +319,7 @@ public class EkycGatewayWorker {
                                                                         "update status to not found by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 case "04" -> {
                                                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(),
@@ -324,7 +328,7 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                                 default -> {
                                                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(),
@@ -333,22 +337,25 @@ public class EkycGatewayWorker {
                                                         dbLogService.createEkycLog("update status to failed by worker",
                                                                         "SYSTEM",
                                                                         ekyc.getId(), null,
-                                                                        null, null);
+                                                                        null, null, ekyc.getAppChannel());
                                                 }
                                         }
                                 } else {
-                                        logger.error("MediaType.APPLICATION_JSON is null in EkycGatewayWorker for face verification for Ekyc ID: {}", ekyc.getId());
+                                        logger.error("MediaType.APPLICATION_JSON is null in EkycGatewayWorker for face verification for Ekyc ID: {}",
+                                                        ekyc.getId());
                                 }
                         } else {
-                                logger.error("Ekyc verify basic URL is not configured in EkycGatewayWorker for face verification for Ekyc ID: {}", ekyc.getId());
+                                logger.error("Ekyc verify basic URL is not configured in EkycGatewayWorker for face verification for Ekyc ID: {}",
+                                                ekyc.getId());
                         }
                 } catch (Exception e) {
-                        logger.error("Exception in EkycGatewayWorker for face verification for Ekyc ID: {}: {}", ekyc.getId(), e.getMessage(), e);
+                        logger.error("Exception in EkycGatewayWorker for face verification for Ekyc ID: {}: {}",
+                                        ekyc.getId(), e.getMessage(), e);
 
                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(), "4", "0", "0",
                                         "gateway timeout");
                         dbLogService.createEkycLog("update status to failed by worker", "SYSTEM", ekyc.getId(), null,
-                                        null, null);
+                                        null, null, ekyc.getAppChannel());
                         e.printStackTrace();
                 }
         }
