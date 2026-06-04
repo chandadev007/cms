@@ -257,6 +257,16 @@ public class BaseApi {
                     yield ekybController.cms_207(data);
                 }
 
+                // cms_208: T24 list
+                case "cms_208" ->{
+                    yield ekybController.cms_208(data);
+                }
+
+                // cms_209: T24 view detail
+                case "cms_209" ->{
+                    yield ekybController.cms_209(data);
+                }
+
                 // cms_download
                 case "cms_download" -> {
                     try {
