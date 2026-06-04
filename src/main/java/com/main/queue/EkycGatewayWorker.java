@@ -317,7 +317,7 @@ public class EkycGatewayWorker {
                                                                         ekyc.getId(), null,
                                                                         null, null);
                                                 }
-                                                case "4" -> {
+                                                case "04" -> {
                                                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(),
                                                                         "4", "0", "0",
                                                                         "face cannot detect");
