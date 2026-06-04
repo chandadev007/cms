@@ -48,7 +48,7 @@ public class EkycService {
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
-            logger.error("Error while calling ekyc_create procedure", e);
+            logger.error("Error while calling ekyc_create procedure", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -70,7 +70,7 @@ public class EkycService {
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
-            logger.error("Error while calling ekyc_processing procedure", e);
+            logger.error("Error while calling ekyc_processing procedure", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -92,7 +92,7 @@ public class EkycService {
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
-            logger.error("Error while calling ekyc_final_status procedure", e);
+            logger.error("Error while calling ekyc_final_status procedure", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -115,7 +115,7 @@ public class EkycService {
 
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
-            logger.error("Error while calling ekyc_final_face procedure", e);
+            logger.error("Error while calling ekyc_final_face procedure", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -124,7 +124,7 @@ public class EkycService {
         try {
             return ekycRepository.findPendingRecords();
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc pending records ", e);
+            logger.error("Error while fetching ekyc pending records ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -133,7 +133,7 @@ public class EkycService {
         try {
             return ekycRepository.getEkycById(id);
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc detail: ", e);
+            logger.error("Error while fetching ekyc detail: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -142,7 +142,7 @@ public class EkycService {
         try {
             return ekycRepository.getEkycPage(size, page, searchValue);
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc page: ", e);
+            logger.error("Error while fetching ekyc page: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -151,7 +151,7 @@ public class EkycService {
         try {
             return ekycRepository.getEkycPageCount(searchValue);
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc page: ", e);
+            logger.error("Error while fetching ekyc page: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -162,7 +162,7 @@ public class EkycService {
             return ekycRepository.getHistories(size, page, searchValue, requestType, statusDesc, fromDate, toDate,
                     userId);
         } catch (Exception e) {
-            logger.error("Error while fetching history page: ", e);
+            logger.error("Error while fetching history page: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -172,7 +172,7 @@ public class EkycService {
         try {
             return ekycRepository.getHistoriesCount(searchValue, requestType, statusDesc, fromDate, toDate, userId);
         } catch (Exception e) {
-            logger.error("Error while fetching history page: ", e);
+            logger.error("Error while fetching history page: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -181,7 +181,7 @@ public class EkycService {
         try {
             return ekycRepository.getHistoryById(id);
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc history detail: ", e);
+            logger.error("Error while fetching ekyc history detail: ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -190,7 +190,7 @@ public class EkycService {
         try {
             return ekycRepository.getSummaryStatus(fromDate, toDate);
         } catch (Exception e) {
-            logger.error("Error while fetching dashboard summary status : ", e);
+            logger.error("Error while fetching dashboard summary status : ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -199,7 +199,7 @@ public class EkycService {
         try {
             return ekycRepository.getRequestbyInputer(fromDate, toDate);
         } catch (Exception e) {
-            logger.error("Error while fetching dashboard count request : ", e);
+            logger.error("Error while fetching dashboard count request : ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -208,7 +208,7 @@ public class EkycService {
         try {
             return ekycRepository.getSummaryByChannel(fromDate, toDate);
         } catch (Exception e) {
-            logger.error("Error while fetching dashboard count channel : ", e);
+            logger.error("Error while fetching dashboard count channel : ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -220,7 +220,7 @@ public class EkycService {
             return ekycRepository.checkEkycExisting(idNumber, firstNameKh, lastNameKh, firstNameEn, lastNameEn, gender,
                     dob, issuedDate, expiredDate, type);
         } catch (Exception e) {
-            logger.error("Error while fetching ekyc check exist : ", e);
+            logger.error("Error while fetching ekyc check exist : ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }
@@ -229,7 +229,7 @@ public class EkycService {
         try {
             return ekycRepository.getFullReport(fromDate, toDate, channel, requestType);
         } catch (Exception e) {
-            logger.error("Error while fetching full report : ", e);
+            logger.error("Error while fetching full report : ", e.getMessage());
             throw new RuntimeException("Database error: " + e.getMessage());
         }
     }

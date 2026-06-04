@@ -327,7 +327,8 @@ public class EkybRepository {
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
                                 "         B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"+ //
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
+                                + //
                                 "              \r\n" + //
                                 "  FROM EKYB_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
@@ -443,15 +444,20 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, FACE_MOI_SCORE, STATUS,\r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n" + 
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYC_PROFILE A, LOG_DATE B\r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
                                 "        AND ((ID_NUMBER LIKE '%' || ? || '%') \r\n" + //
+                                "            OR ((LAST_NAME_KH || ' ' || FIRST_NAME_KH) LIKE '%' || TO_NCHAR(?) || '%')\r\n"
+                                + //
+                                "            OR (UPPER(LAST_NAME_EN) || ' ' || UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n"
+                                + //
                                 "            OR (FIRST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n" + //
-                                "            OR (LAST_NAME_EN LIKE UPPER('%' || ? || '%')))\r\n" + //
+                                "            OR (UPPER(LAST_NAME_EN) LIKE UPPER('%' || ? || '%')))\r\n" + //
                                 "  UNION ALL\r\n" + //
                                 "  SELECT ID, 'eKYB' AS REQUEST_TYPE, APP_CODE, APP_CHANNEL, N'' AS FIRST_NAME_KH, N'' AS lAST_NAME_KH, \r\n"
                                 + //
@@ -459,6 +465,7 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, 0 AS FACE_MOI_SCORE, STATUS, \r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n" + 
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYB_PROFILE C, LOG_DATE D\r\n" + //
                                 "  WHERE C.ID = D.TABLE_ID\r\n" + //
@@ -486,9 +493,9 @@ public class EkybRepository {
                         history.setAppChannel(rs.getString("APP_CHANNEL"));
                         history.setRequestType(rs.getString("REQUEST_TYPE"));
 
-                        if("eKYB".equalsIgnoreCase(rs.getString("REQUEST_TYPE")))
+                        if ("eKYB".equalsIgnoreCase(rs.getString("REQUEST_TYPE")))
                                 history.setEkybType(rs.getString("TYPE"));
-                        else 
+                        else
                                 history.setEkycType(rs.getString("TYPE"));
 
                         history.setFirstNameKh(rs.getString("FIRST_NAME_KH"));
@@ -512,18 +519,16 @@ public class EkybRepository {
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
                         history.setFaceScore(String.valueOf(faceScore));
 
-                        history.setUserId(rs.getString("USER_ID"));
-                        history.setUserName(rs.getString("USER_NAME"));
                         history.setCreateTime(rs.getString("CREATE_TIME2"));
 
                         return history;
                 }, searchValue, searchValue, searchValue, searchValue, searchValue, searchValue, searchValue,
-                                searchValue, searchValue, appChannel, appChannel, requestType, requestType, statusDesc,
+                                searchValue, searchValue, searchValue, searchValue, appChannel, appChannel, requestType,
+                                requestType, statusDesc,
                                 statusDesc,
                                 fromDate, fromDate, toDate, toDate, offSet, size);
         }
 
-        @SuppressWarnings("null")
         public int getListByAppChannelCount(String searchValue, String appChannel,
                         String requestType, String statusDesc, String fromDate, String toDate) {
                 String sql = "\r\n" + //
@@ -544,10 +549,14 @@ public class EkybRepository {
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
                                 "        AND ((ID_NUMBER LIKE '%' || ? || '%') \r\n" + //
+                                "            OR ((LAST_NAME_KH || ' ' || FIRST_NAME_KH) LIKE '%' || TO_NCHAR(?) || '%')\r\n"
+                                + //
+                                "            OR (UPPER(LAST_NAME_EN) || ' ' || UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n"
+                                + //
                                 "            OR (FIRST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n" + //
-                                "            OR (LAST_NAME_EN LIKE UPPER('%' || ? || '%')))\r\n" + //
+                                "            OR (UPPER(LAST_NAME_EN) LIKE UPPER('%' || ? || '%')))\r\n" + //
                                 "  UNION ALL\r\n" + //
                                 "  SELECT ID, 'eKYB' AS REQUEST_TYPE, APP_CODE, APP_CHANNEL, N'' AS FIRST_NAME_KH, N'' AS lAST_NAME_KH, \r\n"
                                 + //
@@ -574,7 +583,8 @@ public class EkybRepository {
                 return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
                                 searchValue,
                                 searchValue, searchValue, searchValue,
-                                searchValue, searchValue, appChannel, appChannel, requestType, requestType, statusDesc,
+                                searchValue, searchValue, searchValue, searchValue, appChannel, appChannel, requestType,
+                                requestType, statusDesc,
                                 statusDesc,
                                 fromDate, fromDate, toDate, toDate);
         }
@@ -584,7 +594,8 @@ public class EkybRepository {
 
                 String sql = "SELECT X.STATUS, COUNT(*) AS COUNT_VALUE \r\n" + //
                                 "FROM(\r\n" + //
-                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n" + //
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n"
+                                + //
                                 "                    FROM CAMDX_LOG T \r\n" + //
                                 "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
                                 "                    )      \r\n" + //
@@ -648,7 +659,5 @@ public class EkybRepository {
                                 companyNameEn,
                                 companyNameEn, companyNameKh, companyNameKh);
         }
-
-        
 
 }

@@ -712,9 +712,10 @@ public class EkycRepository {
         public Map<String, String> getSummaryByChannel(String fromDate, String toDate) {
                 String sql = "SELECT X.APP_CHANNEL, COUNT(*) AS COUNT_VALUE \r\n" + //
                                 "FROM(\r\n" + //
-                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, ACTION_TYPE, UNIT_ID, USER_ID, USER_NAME, CREATED_TIME\r\n"
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n"
                                 + //
-                                "                    FROM CAMDX_LOG T WHERE T.ACTION_TYPE = 'USER'\r\n" + //
+                                "                    FROM CAMDX_LOG T \r\n" + //
+                                "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
                                 "                    )      \r\n" + //
                                 "\r\n" + //
                                 "  SELECT A.ID, 'eKYC' REQUEST_TYPE, A.STATUS, B.CREATED_TIME, A.APP_CHANNEL\r\n" + //
@@ -838,7 +839,7 @@ public class EkycRepository {
 
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
                         ReportFull reportFull = new ReportFull();
-                        
+
                         reportFull.setId(rs.getString("ID_NUMBER"));
                         reportFull.setCustomerNameEn(rs.getString("CUSTOMER_NAME_EN"));
                         reportFull.setDateAssessment(rs.getString("DATE_ASSESSMENT"));
@@ -848,7 +849,7 @@ public class EkycRepository {
                                         : rs.getString("CURRENT_SCORE").isEmpty() ? "0" : rs.getString("CURRENT_SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
                         reportFull.setCurrentScore(String.valueOf(score));
-                        
+
                         reportFull.setStatus(rs.getString("STATUS"));
                         reportFull.setGender(rs.getString("GENDER"));
                         reportFull.setBirthDate(rs.getString("DOB"));
