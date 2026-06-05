@@ -88,7 +88,7 @@ public class FileManagementService {
                 throw new RuntimeException("Upload URL is not configured");
             }
         } catch (Exception e) {
-            logger.error("Error occurred while calling remote upload service: {}", e.getMessage(), e);
+            logger.error("Error occurred while calling remote upload service: {}", e);
             throw new RuntimeException("Error occurred while calling remote upload service", e);
         }
     }
@@ -121,8 +121,8 @@ public class FileManagementService {
                 throw new RuntimeException("Download URL is not configured");
             }
         } catch (Exception e) {
-            logger.error("Error occurred while calling remote download service: {}", e.getMessage(), e);
-            throw new RuntimeException("Error occurred while calling remote download service: " + e.getMessage(), e);
+            logger.error("Error occurred while calling remote download service: {}", e);
+            throw new RuntimeException("Error occurred while calling remote download service: ", e);
         }
     }
 

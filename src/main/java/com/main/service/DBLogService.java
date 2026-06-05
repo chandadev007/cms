@@ -64,7 +64,7 @@ public class DBLogService {
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
             logger.error("Error while calling ekyc_create procedure", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: ", e);
         }
     }
 }

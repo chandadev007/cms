@@ -13,6 +13,7 @@ public class Ekyb {
     private String companyNameKh;
     private String companyNameEn;
     private JsonNode dirList;
+    private JsonNode resDirList;
     private String type;
     private String note;
     private String status;
@@ -125,5 +126,11 @@ public class Ekyb {
 	}
 	public void setStep3(HistoryAction step3) {
 		this.step3 = step3;
-	} 
+	}
+    public JsonNode getResDirList() {
+        return resDirList;
+    }
+    public void setResDirList(JsonNode resDirList) {
+        this.resDirList = resDirList;
+    } 
 }

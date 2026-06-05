@@ -123,6 +123,12 @@ public class EkybController {
             }
 
             Ekyb ekyb = ekybService.getEkybById(id);
+            if (ekyb == null) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of("error", "1", "errorDetail", "Customer not exsit"));
+            }
+            
             TemplateResponse<Ekyb> response = new TemplateResponse<>();
             response.setError("0");
             response.setData(ekyb);

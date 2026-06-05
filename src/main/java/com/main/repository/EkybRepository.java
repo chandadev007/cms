@@ -11,12 +11,13 @@ import com.main.model.HistoryAction;
 import com.main.utilities.StatusClassification;
 
 import jakarta.annotation.PostConstruct;
-
 import java.sql.Types;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,7 +38,7 @@ public class EkybRepository {
         private JdbcTemplate jdbcTemplate;
         private final ObjectMapper objectMapper;
 
-        private SimpleJdbcCall ekybCreateCall, ekybProcessingCall, ekybFinalStatusCall;
+        private SimpleJdbcCall ekybCreateCall, ekybProcessingCall, ekybFinalStatusCall, ekybFinalDirectorCall;
 
         public EkybRepository(JdbcTemplate jdbcTemplate) {
                 this.jdbcTemplate = jdbcTemplate;
@@ -81,6 +82,18 @@ public class EkybRepository {
                                                 new SqlParameter("IN_SCORE", Types.VARCHAR),
                                                 new SqlParameter("IN_ERROR_DETAIL", Types.VARCHAR),
                                                 new SqlOutParameter("P_RESULT", Types.VARCHAR));
+
+                this.ekybFinalDirectorCall = new SimpleJdbcCall(jdbcTemplate)
+                                .withSchemaName(dbSchema)
+                                .withCatalogName(catalogName)
+                                .withProcedureName("EKYB_FINAL_DIRECTOR")
+                                .declareParameters(
+                                                new SqlParameter("IN_ID", Types.VARCHAR),
+                                                new SqlParameter("IN_STATUS", Types.VARCHAR),
+                                                new SqlParameter("IN_SCORE", Types.VARCHAR),
+                                                new SqlParameter("IN_ERROR_DETAIL", Types.VARCHAR),
+                                                new SqlParameter("IN_RES_DIR_LIST_JSON", Types.VARCHAR),
+                                                new SqlOutParameter("P_RESULT", Types.VARCHAR));
         }
 
         public String createEkyb(String singleId, String tin, String nameKH, String nameEn, String dirListJson,
@@ -102,7 +115,6 @@ public class EkybRepository {
 
                         responseMap.put("p_result", out.get("P_RESULT"));
                         responseMap.put("out_id", out.get("OUT_ID"));
-
                         // Return as JSON string
                         return objectMapper.writeValueAsString(responseMap);
                 } catch (Exception e) {
@@ -119,9 +131,7 @@ public class EkybRepository {
                 Map<String, Object> responseMap = new HashMap<>();
                 try {
                         Map<String, Object> out = ekybProcessingCall.execute(in);
-
                         responseMap.put("p_result", out.get("P_RESULT"));
-
                         // Return as JSON string
                         return objectMapper.writeValueAsString(responseMap);
                 } catch (Exception e) {
@@ -141,9 +151,29 @@ public class EkybRepository {
                 Map<String, Object> responseMap = new HashMap<>();
                 try {
                         Map<String, Object> out = ekybFinalStatusCall.execute(in);
-
                         responseMap.put("p_result", out.get("P_RESULT"));
+                        // Return as JSON string
+                        return objectMapper.writeValueAsString(responseMap);
+                } catch (Exception e) {
+                        // Build error JSON manually to avoid further exceptions
+                        return String.format("{\"p_result\": \"exception: %s\", \"out_entries_id\": null}",
+                                        e.getMessage().replace("\"", "\\\""));
+                }
+        }
 
+        public String updateFinalDirector(String id, String status, String score, String errorDetail,
+                        String resDirListJson) {
+                MapSqlParameterSource in = new MapSqlParameterSource()
+                                .addValue("IN_ID", id)
+                                .addValue("IN_STATUS", status)
+                                .addValue("IN_SCORE", score)
+                                .addValue("IN_ERROR_DETAIL", errorDetail)
+                                .addValue(("IN_RES_DIR_LIST_JSON"), resDirListJson);
+
+                Map<String, Object> responseMap = new HashMap<>();
+                try {
+                        Map<String, Object> out = ekybFinalDirectorCall.execute(in);
+                        responseMap.put("p_result", out.get("P_RESULT"));
                         // Return as JSON string
                         return objectMapper.writeValueAsString(responseMap);
                 } catch (Exception e) {
@@ -156,7 +186,8 @@ public class EkybRepository {
         public List<Ekyb> findPendingRecords() {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE\r\n" + //
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, \r\n" + //
+                                "       RES_DIR_LIST_JSON\r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE STATUS = 0\r\n" + //
                                 "ORDER BY ID ASC ";
@@ -173,14 +204,47 @@ public class EkybRepository {
                         ekyb.setCompanyNameKh(rs.getString("COMPANY_NAME_KH"));
                         ekyb.setCompanyNameEn(rs.getString("COMPANY_NAME_EN"));
 
+                        // director json list
                         String dirList = rs.getString("DIR_LIST_JSON");
                         JsonNode dirListNode;
-
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-
                         } catch (JsonProcessingException e) {
+                        }
+
+                        // response director json list
+                        String resDirList = rs.getString("RES_DIR_LIST_JSON");
+                        JsonNode resDirListNode;
+                        try {
+                                resDirListNode = objectMapper.readTree(resDirList);
+                                if (resDirListNode != null) {
+                                        List<Map<String, Object>> list = StreamSupport
+                                                        .stream(resDirListNode.spliterator(), false)
+                                                        .map(node -> {
+                                                                Map<String, Object> map = new HashMap<>();
+                                                                map.put("exist", node.path("exist").asText());
+                                                                map.put("incorrect_fields",
+                                                                                node.path("incorrect_fields"));
+                                                                map.put("identification_number",
+                                                                                node.path("identification_number")
+                                                                                                .asText());
+
+                                                                String scoreString = node.path("score").asText() == null
+                                                                                ? "0"
+                                                                                : node.path("score").asText("")
+                                                                                                .isEmpty() ? "0"
+                                                                                                                : node.path("score")
+                                                                                                                                .asText("");
+                                                                double score = Double.parseDouble(scoreString) * 100;
+                                                                map.put("score", String.valueOf(score));
+
+                                                                return map;
+                                                        })
+                                                        .collect(Collectors.toList());
+                                        ekyb.setResDirList(objectMapper.valueToTree(list));
+                                }
+                        } catch (Exception e) {
                         }
 
                         String scoreString = rs.getString("SCORE") == null ? "0"
@@ -202,47 +266,88 @@ public class EkybRepository {
         public Ekyb getEkybById(String id) {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE\r\n" + //
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE ID = ?";
 
-                return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-                        Ekyb ekyb = new Ekyb();
+                try {
+                        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                                Ekyb ekyb = new Ekyb();
 
-                        ekyb.setId(rs.getString("ID"));
-                        ekyb.setAppCode(rs.getString("APP_CODE"));
-                        ekyb.setAppChannel(rs.getString("APP_CHANNEL"));
+                                ekyb.setId(rs.getString("ID"));
+                                ekyb.setAppCode(rs.getString("APP_CODE"));
+                                ekyb.setAppChannel(rs.getString("APP_CHANNEL"));
 
-                        ekyb.setSingleId(rs.getString("SINGLE_ID"));
-                        ekyb.setTin(rs.getString("TIN"));
-                        ekyb.setCompanyNameKh(rs.getString("COMPANY_NAME_KH"));
-                        ekyb.setCompanyNameEn(rs.getString("COMPANY_NAME_EN"));
+                                ekyb.setSingleId(rs.getString("SINGLE_ID"));
+                                ekyb.setTin(rs.getString("TIN"));
+                                ekyb.setCompanyNameKh(rs.getString("COMPANY_NAME_KH"));
+                                ekyb.setCompanyNameEn(rs.getString("COMPANY_NAME_EN"));
 
-                        String dirList = rs.getString("DIR_LIST_JSON");
-                        JsonNode dirListNode;
+                                // director json list
+                                String dirList = rs.getString("DIR_LIST_JSON");
+                                JsonNode dirListNode;
+                                try {
+                                        dirListNode = objectMapper.readTree(dirList);
+                                        ekyb.setDirList(dirListNode);
+                                } catch (JsonProcessingException e) {
+                                }
 
-                        try {
-                                dirListNode = objectMapper.readTree(dirList);
-                                ekyb.setDirList(dirListNode);
+                                // response director json list
+                                String resDirList = rs.getString("RES_DIR_LIST_JSON");
+                                JsonNode resDirListNode;
+                                try {
+                                        resDirListNode = objectMapper.readTree(resDirList);
+                                        if (resDirListNode != null) {
+                                                List<Map<String, Object>> list = StreamSupport
+                                                                .stream(resDirListNode.spliterator(), false)
+                                                                .map(node -> {
+                                                                        Map<String, Object> map = new HashMap<>();
+                                                                        map.put("exist", node.path("exist").asText());
+                                                                        map.put("incorrect_fields",
+                                                                                        node.path("incorrect_fields"));
+                                                                        map.put("identification_number",
+                                                                                        node.path("identification_number")
+                                                                                                        .asText());
 
-                        } catch (JsonProcessingException e) {
-                        }
+                                                                        String scoreString = node.path("score")
+                                                                                        .asText() == null
+                                                                                                        ? "0"
+                                                                                                        : node.path("score")
+                                                                                                                        .asText("")
+                                                                                                                        .isEmpty() ? "0"
+                                                                                                                                        : node.path("score")
+                                                                                                                                                        .asText("");
+                                                                        double score = Double.parseDouble(scoreString)
+                                                                                        * 100;
+                                                                        map.put("score", String.valueOf(score));
 
-                        String scoreString = rs.getString("SCORE") == null ? "0"
-                                        : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
+                                                                        return map;
+                                                                })
+                                                                .collect(Collectors.toList());
+                                                ekyb.setResDirList(objectMapper.valueToTree(list));
+                                        }
+                                } catch (Exception e) {
+                                }
 
-                        double score = Double.parseDouble(scoreString) * 100;
-                        ekyb.setScore(String.valueOf(score));
+                                String scoreString = rs.getString("SCORE") == null ? "0"
+                                                : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
 
-                        ekyb.setStatus(rs.getString("STATUS"));
-                        ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                                double score = Double.parseDouble(scoreString) * 100;
+                                ekyb.setScore(String.valueOf(score));
 
-                        ekyb.setType(rs.getString("TYPE"));
-                        ekyb.setNote(rs.getString("NOTE"));
-                        ekyb.setErrorDetail(rs.getString("ERROR_DETAIL"));
+                                ekyb.setStatus(rs.getString("STATUS"));
+                                ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
 
-                        return ekyb;
-                }, id);
+                                ekyb.setType(rs.getString("TYPE"));
+                                ekyb.setNote(rs.getString("NOTE"));
+                                ekyb.setErrorDetail(rs.getString("ERROR_DETAIL"));
+
+                                return ekyb;
+                        }, id);
+                } catch (Exception e) {
+                        return null;
+                }
         }
 
         public List<Ekyb> getEkybPage(int size, int page, String searchString) {
@@ -250,9 +355,10 @@ public class EkybRepository {
                 int offSet = (page - 1) * size;
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE\r\n" + //
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                + //
                                 "FROM EKYB_PROFILE \r\n" + //
-                                "WHERE 1=1 \r\n" + //
+                                "WHERE 1 = 1 \r\n" + //
                                 "      AND ((SINGLE_ID LIKE '%' || ? || '%') \r\n" + //
                                 "           OR (TIN LIKE '%' || ? || '%')\r\n" + //
                                 "           OR (COMPANY_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
@@ -272,14 +378,47 @@ public class EkybRepository {
                         ekyb.setCompanyNameKh(rs.getString("COMPANY_NAME_KH"));
                         ekyb.setCompanyNameEn(rs.getString("COMPANY_NAME_EN"));
 
+                        // director json list
                         String dirList = rs.getString("DIR_LIST_JSON");
                         JsonNode dirListNode;
-
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-
                         } catch (JsonProcessingException e) {
+                        }
+
+                        // response director json list
+                        String resDirList = rs.getString("RES_DIR_LIST_JSON");
+                        JsonNode resDirListNode;
+                        try {
+                                resDirListNode = objectMapper.readTree(resDirList);
+                                if (resDirListNode != null) {
+                                        List<Map<String, Object>> list = StreamSupport
+                                                        .stream(resDirListNode.spliterator(), false)
+                                                        .map(node -> {
+                                                                Map<String, Object> map = new HashMap<>();
+                                                                map.put("exist", node.path("exist").asText());
+                                                                map.put("incorrect_fields",
+                                                                                node.path("incorrect_fields"));
+                                                                map.put("identification_number",
+                                                                                node.path("identification_number")
+                                                                                                .asText());
+
+                                                                String scoreString = node.path("score").asText() == null
+                                                                                ? "0"
+                                                                                : node.path("score").asText("")
+                                                                                                .isEmpty() ? "0"
+                                                                                                                : node.path("score")
+                                                                                                                                .asText("");
+                                                                double score = Double.parseDouble(scoreString) * 100;
+                                                                map.put("score", String.valueOf(score));
+
+                                                                return map;
+                                                        })
+                                                        .collect(Collectors.toList());
+                                        ekyb.setResDirList(objectMapper.valueToTree(list));
+                                }
+                        } catch (Exception e) {
                         }
 
                         String scoreString = rs.getString("SCORE") == null ? "0"
@@ -312,8 +451,12 @@ public class EkybRepository {
                                 "             OR (UPPER(COMPANY_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
                                 "\r\n" + //
                                 ") ";
-                return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
-                                searchValue);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
+                                        searchValue);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
 
         public List<Ekyb> getHistoryById(String id) {
@@ -326,8 +469,9 @@ public class EkybRepository {
                                 "         CASE WHEN B.ACTION_TYPE = 'USER' THEN B.USER_NAME\r\n" + //
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
-                                "         B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"+ //
+                                "         A.RES_DIR_LIST_JSON, B.CREATED_TIME, \r\n" + //
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
+                                + //
                                 "              \r\n" + //
                                 "  FROM EKYB_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
@@ -348,14 +492,47 @@ public class EkybRepository {
                         ekyb.setCompanyNameKh(rs.getString("COMPANY_NAME_KH"));
                         ekyb.setCompanyNameEn(rs.getString("COMPANY_NAME_EN"));
 
+                        // director json list
                         String dirList = rs.getString("DIR_LIST_JSON");
                         JsonNode dirListNode;
-
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-
                         } catch (JsonProcessingException e) {
+                        }
+
+                        // response director json list
+                        String resDirList = rs.getString("RES_DIR_LIST_JSON");
+                        JsonNode resDirListNode;
+                        try {
+                                resDirListNode = objectMapper.readTree(resDirList);
+                                if (resDirListNode != null) {
+                                        List<Map<String, Object>> list = StreamSupport
+                                                        .stream(resDirListNode.spliterator(), false)
+                                                        .map(node -> {
+                                                                Map<String, Object> map = new HashMap<>();
+                                                                map.put("exist", node.path("exist").asText());
+                                                                map.put("incorrect_fields",
+                                                                                node.path("incorrect_fields"));
+                                                                map.put("identification_number",
+                                                                                node.path("identification_number")
+                                                                                                .asText());
+
+                                                                String scoreString = node.path("score").asText() == null
+                                                                                ? "0"
+                                                                                : node.path("score").asText("")
+                                                                                                .isEmpty() ? "0"
+                                                                                                                : node.path("score")
+                                                                                                                                .asText("");
+                                                                double score = Double.parseDouble(scoreString) * 100;
+                                                                map.put("score", String.valueOf(score));
+
+                                                                return map;
+                                                        })
+                                                        .collect(Collectors.toList());
+                                        ekyb.setResDirList(objectMapper.valueToTree(list));
+                                }
+                        } catch (Exception e) {
                         }
 
                         String scoreString = rs.getString("SCORE") == null ? "0"
@@ -486,9 +663,9 @@ public class EkybRepository {
                         history.setAppChannel(rs.getString("APP_CHANNEL"));
                         history.setRequestType(rs.getString("REQUEST_TYPE"));
 
-                        if("eKYB".equalsIgnoreCase(rs.getString("REQUEST_TYPE")))
+                        if ("eKYB".equalsIgnoreCase(rs.getString("REQUEST_TYPE")))
                                 history.setEkybType(rs.getString("TYPE"));
-                        else 
+                        else
                                 history.setEkycType(rs.getString("TYPE"));
 
                         history.setFirstNameKh(rs.getString("FIRST_NAME_KH"));
@@ -571,12 +748,17 @@ public class EkybRepository {
                                 "      AND ((TRIM(?) IS NULL) OR (X.CREATED_TIME >= ?))           --FROM_DATE\r\n" + //
                                 "      AND ((TRIM(?) IS NULL) OR (X.CREATED_TIME <= ?))           --TO_DATE";
 
-                return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
-                                searchValue,
-                                searchValue, searchValue, searchValue,
-                                searchValue, searchValue, appChannel, appChannel, requestType, requestType, statusDesc,
-                                statusDesc,
-                                fromDate, fromDate, toDate, toDate);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
+                                        searchValue,
+                                        searchValue, searchValue, searchValue,
+                                        searchValue, searchValue, appChannel, appChannel, requestType, requestType,
+                                        statusDesc,
+                                        statusDesc,
+                                        fromDate, fromDate, toDate, toDate);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
 
         public Map<String, String> getSummaryStatusByAppChannel(String searchValue, String appChannel,
@@ -584,7 +766,8 @@ public class EkybRepository {
 
                 String sql = "SELECT X.STATUS, COUNT(*) AS COUNT_VALUE \r\n" + //
                                 "FROM(\r\n" + //
-                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n" + //
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n"
+                                + //
                                 "                    FROM CAMDX_LOG T \r\n" + //
                                 "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
                                 "                    )      \r\n" + //
@@ -644,11 +827,13 @@ public class EkybRepository {
                                 "      AND ((TRIM(?) IS NULL) OR (COMPANY_NAME_EN = ?))      --COMPANY_NAME_EN \r\n" + //
                                 "      AND ((TRIM(?) IS NULL) OR (COMPANY_NAME_KH = TO_NCHAR(?)))  --COMPANY_NAME_KH ";
 
-                return jdbcTemplate.queryForObject(sql, Integer.class, type, type, singleId, singleId, tin, tin,
-                                companyNameEn,
-                                companyNameEn, companyNameKh, companyNameKh);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, type, type, singleId, singleId, tin, tin,
+                                        companyNameEn,
+                                        companyNameEn, companyNameKh, companyNameKh);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
-
-        
 
 }

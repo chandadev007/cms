@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +38,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 @RestController
 @RequestMapping("/cms")
 public class BaseApi {
+    private static final Logger logger = LoggerFactory.getLogger(BaseApi.class);
 
     @Value("${cms.file-management.app-code}")
     private String AppCode;
@@ -258,12 +261,12 @@ public class BaseApi {
                 }
 
                 // cms_208: T24 list
-                case "cms_208" ->{
+                case "cms_208" -> {
                     yield ekybController.cms_208(data);
                 }
 
                 // cms_209: T24 view detail
-                case "cms_209" ->{
+                case "cms_209" -> {
                     yield ekybController.cms_209(data);
                 }
 
@@ -292,6 +295,7 @@ public class BaseApi {
             };
 
         } catch (Exception e) {
+            logger.error("Error Internal Server: ", e);
             return buildErrorResponse("Error Internal Server");
         }
     }

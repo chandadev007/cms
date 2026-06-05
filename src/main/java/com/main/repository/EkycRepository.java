@@ -394,9 +394,13 @@ public class EkycRepository {
                                 "            OR (UPPER(LAST_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
                                 ")";
 
-                return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
-                                searchValue, searchValue, searchValue,
-                                searchValue);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
+                                        searchValue, searchValue, searchValue,
+                                        searchValue);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
 
         public List<History> getHistories(int size, int page, String searchValue, String requestType, String statusDesc,
@@ -553,12 +557,17 @@ public class EkycRepository {
                                 "        AND ((TRIM(?) IS NULL) OR (X.USER_ID = ?)) \r\n" + //
                                 ")";
 
-                return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
-                                searchValue, searchValue, searchValue,
-                                searchValue, searchValue, searchValue, searchValue,
-                                searchValue, requestType, requestType, statusDesc, statusDesc, fromDate, fromDate,
-                                toDate, toDate,
-                                userId, userId);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, searchValue, searchValue, searchValue,
+                                        searchValue, searchValue, searchValue,
+                                        searchValue, searchValue, searchValue, searchValue,
+                                        searchValue, requestType, requestType, statusDesc, statusDesc, fromDate,
+                                        fromDate,
+                                        toDate, toDate,
+                                        userId, userId);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
 
         public List<Ekyc> getHistoryById(String id) {
@@ -769,10 +778,16 @@ public class EkycRepository {
                                 + //
                                 "      AND (('1' = ?) OR (TYPE = ?))     ";
 
-                return jdbcTemplate.queryForObject(sql, Integer.class, idNumber, idNumber, firstNameKh, firstNameKh,
-                                lastNameKh, lastNameKh, firstNameEn, firstNameEn, lastNameEn, lastNameEn, gender,
-                                gender, dob, dob,
-                                issuedDate, issuedDate, expiredDate, expiredDate, type, type);
+                try {
+                        return jdbcTemplate.queryForObject(sql, Integer.class, idNumber, idNumber, firstNameKh,
+                                        firstNameKh,
+                                        lastNameKh, lastNameKh, firstNameEn, firstNameEn, lastNameEn, lastNameEn,
+                                        gender,
+                                        gender, dob, dob,
+                                        issuedDate, issuedDate, expiredDate, expiredDate, type, type);
+                } catch (Exception e) {
+                        return 0;
+                }
         }
 
         public List<ReportFull> getFullReport(String fromDate, String toDate, String channel, String requestType) {
@@ -803,7 +818,7 @@ public class EkycRepository {
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
                                 "\r\n" + //
-                                "  UNION \r\n" + //
+                                "  UNION ALL \r\n" + //
                                 "  SELECT CASE WHEN C.TYPE IN (1, 3) THEN C.SINGLE_ID \r\n" + //
                                 "              ELSE C.TIN \r\n" + //
                                 "         END AS ID_NUMBER, C.COMPANY_NAME_EN AS CUSTOMER_NAME_EN, \r\n" + //
@@ -838,7 +853,7 @@ public class EkycRepository {
 
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
                         ReportFull reportFull = new ReportFull();
-                        
+
                         reportFull.setId(rs.getString("ID_NUMBER"));
                         reportFull.setCustomerNameEn(rs.getString("CUSTOMER_NAME_EN"));
                         reportFull.setDateAssessment(rs.getString("DATE_ASSESSMENT"));
@@ -848,7 +863,7 @@ public class EkycRepository {
                                         : rs.getString("CURRENT_SCORE").isEmpty() ? "0" : rs.getString("CURRENT_SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
                         reportFull.setCurrentScore(String.valueOf(score));
-                        
+
                         reportFull.setStatus(rs.getString("STATUS"));
                         reportFull.setGender(rs.getString("GENDER"));
                         reportFull.setBirthDate(rs.getString("DOB"));

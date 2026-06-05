@@ -100,6 +100,15 @@ public class CamdxBatchScheduler {
 
                             ekybGatewayWorker.sendToEkybVerifyWithTIN(ekyb);
                         }
+                        // verfiy with Director
+                        else if ("3".equalsIgnoreCase(ekyb.getType())) {
+                            // Update status in DB
+                            ekybService.updateToProcessing(ekyb.getId());
+                            dbLogService.createEkybLog("update status to processing by worker", "SYSTEM", ekyb.getId(),
+                                    null, null, null, ekyb.getAppChannel());
+
+                            ekybGatewayWorker.sendToEkybVerifyWithDirectors(ekyb);
+                        }
                     } catch (Exception itemEx) {
                         logger.error("Failed processing individual Ekyb record ID: " + ekyb.getId(), itemEx);
                     }

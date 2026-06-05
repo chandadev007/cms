@@ -38,7 +38,7 @@ public class EkybService {
             response.put("out_id",
                     jsonNode.has("out_id") ? jsonNode.get("out_id").asText() : "");
 
-            if(!"success".equalsIgnoreCase(response.get("p_result").toString())) {
+            if (!"success".equalsIgnoreCase(response.get("p_result").toString())) {
                 logger.warn("Failed to create Ekyb for singleId: {}. Result: {}", singleId, response.get("p_result"));
             } else {
                 logger.info("Ekyb created successfully for singleId: {}", singleId);
@@ -47,7 +47,7 @@ public class EkybService {
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
             logger.error("Error while calling ekyb_create procedure", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -69,17 +69,7 @@ public class EkybService {
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
             logger.error("Error while calling ekyb_processing procedure", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
-        }
-    }
-
-    public List<Ekyb> findPendingRecords() {
-        try {
-            List<Ekyb> ekybs = ekybRepository.findPendingRecords();
-            return ekybs;
-        } catch (Exception e) {
-            logger.error("Error while fetching ekyb pending records ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -97,11 +87,44 @@ public class EkybService {
             } else {
                 logger.info("Ekyb final status updated successfully for id: {}", id);
             }
-            
+
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
-            logger.error("Error while calling ekyb_processing procedure", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            logger.error("Error while calling ekyb_final_status procedure", e);
+            throw new RuntimeException("Database error: " , e);
+        }
+    }
+
+    public String updateFinalDirector(String id, String status, String score, String errorDetail,
+            String resDirListJson) {
+        logger.info("Initiating Ekyb update for: {}", id);
+        try {
+            String outParams = ekybRepository.updateFinalDirector(id, status, score, errorDetail, resDirListJson);
+
+            JsonNode jsonNode = objectMapper.readTree(outParams);
+            Map<String, Object> response = new HashMap<>();
+            response.put("p_result", jsonNode.has("p_result") ? jsonNode.get("p_result").asText() : "");
+
+            if (!"success".equalsIgnoreCase(response.get("p_result").toString())) {
+                logger.warn("Failed to update Ekyb final director for id: {}. Result: {}", id, response.get("p_result"));
+            } else {
+                logger.info("Ekyb final director updated successfully for id: {}", id);
+            }
+
+            return objectMapper.writeValueAsString(response);
+        } catch (Exception e) {
+            logger.error("Error while calling ekyb_final_director procedure", e);
+            throw new RuntimeException("Database error: " , e);
+        }
+    }
+
+    public List<Ekyb> findPendingRecords() {
+        try {
+            List<Ekyb> ekybs = ekybRepository.findPendingRecords();
+            return ekybs;
+        } catch (Exception e) {
+            logger.error("Error while fetching ekyb pending records ", e);
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -110,7 +133,7 @@ public class EkybService {
             return ekybRepository.getEkybById(id);
         } catch (Exception e) {
             logger.error("Error while fetching ekyb detail: ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -119,7 +142,7 @@ public class EkybService {
             return ekybRepository.getEkybPage(size, page, searchString);
         } catch (Exception e) {
             logger.error("Error while fetching ekyb page: ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -128,7 +151,7 @@ public class EkybService {
             return ekybRepository.getEkybPageCount(searchValue);
         } catch (Exception e) {
             logger.error("Error while fetching ekyb page: ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -137,7 +160,7 @@ public class EkybService {
             return ekybRepository.getHistoryById(id);
         } catch (Exception e) {
             logger.error("Error while fetching ekyb history detail: ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -148,7 +171,7 @@ public class EkybService {
                     fromDate, toDate);
         } catch (Exception e) {
             logger.error("Error while fetching list channel: ", appChannel + " " + e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -159,7 +182,7 @@ public class EkybService {
                     toDate);
         } catch (Exception e) {
             logger.error("Error while fetching list channel: ", appChannel + " " + e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -170,7 +193,7 @@ public class EkybService {
                     fromDate, toDate);
         } catch (Exception e) {
             logger.error("Error while fetching summary status channel: ", appChannel + " " + e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 
@@ -179,7 +202,7 @@ public class EkybService {
             return ekybRepository.checkEkybExisting(type, singleId, tin, companyNameEn, companyNameKh);
         } catch (Exception e) {
             logger.error("Error while fetching ekyb check exist ", e);
-            throw new RuntimeException("Database error: " + e.getMessage());
+            throw new RuntimeException("Database error: " , e);
         }
     }
 

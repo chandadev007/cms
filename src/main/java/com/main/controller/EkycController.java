@@ -212,7 +212,6 @@ public class EkycController {
     public ResponseEntity<?> cms_103(JsonNode data) {
         try {
             String id = data.path("id").asText();
-
             if (id == null || id.isEmpty()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -220,6 +219,12 @@ public class EkycController {
             }
 
             Ekyc ekyc = ekycService.getEkycById(id);
+            if (ekyc == null) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of("error", "1", "errorDetail", "Customer not exsit"));
+            }
+
             TemplateResponse<Ekyc> response = new TemplateResponse<Ekyc>();
             response.setError("0");
             response.setData(ekyc);

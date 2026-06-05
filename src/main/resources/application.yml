@@ -9,6 +9,18 @@ spring:
     password: internaldb
     driver-class-name: oracle.jdbc.OracleDriver
 
+    # 1. Connection Pool Level Timeouts (HikariCP)
+    hikari:
+      connection-timeout: 10000
+      idle-timeout: 40000
+      max-lifetime: 1800000
+      
+    # 2. Oracle Driver Level Timeouts (FIXED: Fixed indentation to be directly under datasource)
+    connection-properties: >
+      oracle.net.CONNECT_TIMEOUT=10,
+      oracle.jdbc.ReadTimeout=10000
+
+
   # Multipart / File Upload Size Limits
   servlet:
     multipart:

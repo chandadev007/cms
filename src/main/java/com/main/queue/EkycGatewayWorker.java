@@ -162,7 +162,7 @@ public class EkycGatewayWorker {
                         }
                 } catch (Exception e) {
                         logger.error("Exception in EkycGatewayWorker for basic info verification for Ekyc ID: {}: {}",
-                                        ekyc.getId(), e.getMessage(), e);
+                                        ekyc.getId(), e);
 
                         ekycService.updateFinalStatus(ekyc.getId(), ekyc.getIdNumber(), "4", "0",
                                         "gateway timeout");
@@ -350,7 +350,7 @@ public class EkycGatewayWorker {
                         }
                 } catch (Exception e) {
                         logger.error("Exception in EkycGatewayWorker for face verification for Ekyc ID: {}: {}",
-                                        ekyc.getId(), e.getMessage(), e);
+                                        ekyc.getId(), e);
 
                         ekycService.updateFinalFace(ekyc.getId(), ekyc.getIdNumber(), "4", "0", "0",
                                         "gateway timeout");

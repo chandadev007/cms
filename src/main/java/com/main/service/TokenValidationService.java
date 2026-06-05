@@ -76,7 +76,7 @@ public class TokenValidationService {
             return mapper.writeValueAsString(responseObj);
 
         } catch (Exception e) {
-            logger.info("Exception during token validation for userId {}: {}", userId, e.getMessage());
+            logger.info("Exception during token validation for userId {}: {}", userId, e);
             return buildErrorJson("Validation Error: " + e.getMessage());
         }
     }
