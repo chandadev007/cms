@@ -369,6 +369,7 @@ public class EkycController {
                     ekyb.setType(ekybs.get(i).getType());
                     ekyb.setNote(ekybs.get(i).getNote());
                     ekyb.setErrorDetail(ekybs.get(i).getErrorDetail());
+                    ekyb.setResDirList(ekybs.get(i).getResDirList());
 
                     if (i == 0)
                         ekyb.setStep1(ekybs.get(i).getStep1());
