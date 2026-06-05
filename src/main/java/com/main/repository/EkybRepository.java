@@ -210,7 +210,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list
@@ -290,7 +290,7 @@ public class EkybRepository {
                                 try {
                                         dirListNode = objectMapper.readTree(dirList);
                                         ekyb.setDirList(dirListNode);
-                                } catch (JsonProcessingException e) {
+                                } catch (Exception e) {
                                 }
 
                                 // response director json list
@@ -384,7 +384,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list
@@ -498,7 +498,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list

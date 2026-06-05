@@ -625,7 +625,7 @@ public class EkybController {
 
             // summary status
             Map<String, String> summaryByStatus = ekybService.getSummaryStatusByAppChannel(searchValue,
-                    "Mobile Banking",
+                    "T24",
                     requestType, statusDesc, fromDate, toDate);
             Map<String, String> summaryStatus = new HashMap<>();
 
