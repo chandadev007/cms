@@ -267,8 +267,6 @@ public class EkybGatewayWorker {
             map.put("company_name_kh", ekyb.getCompanyNameKh());
             map.put("directors", ekyb.getDirList());
 
-            System.out.println(objectMapper.writeValueAsString(map));
-
             final String ekybVerifyBasicUrl2 = ekybVerifyBasicUrl;
             if (ekybVerifyBasicUrl2 != null) {
                 final MediaType application_JSON2 = MediaType.APPLICATION_JSON;
