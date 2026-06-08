@@ -12,9 +12,9 @@ public class StatusClassification {
             case "2" -> "Not Found";
             case "4" -> "Failed";
             case "3" -> {
-                if (score >= 100)
+                if (score >= 90)
                     yield "Low risk";
-                if (score >= 80)
+                if (score >= 70)
                     yield "Medium risk";
                 yield "High risk";
             }

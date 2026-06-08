@@ -16,7 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -613,25 +616,24 @@ public class EkycController {
 
                     // Create header row
                     sheet.createRow(4).createCell(0).setCellValue("No.");
-                    sheet.getRow(4).createCell(1).setCellValue("Id");
-                    sheet.getRow(4).createCell(2).setCellValue("Customer name EN");
-                    sheet.getRow(4).createCell(3).setCellValue("Date assessment");
-                    sheet.getRow(4).createCell(4).setCellValue("Current assessment");
-                    sheet.getRow(4).createCell(5).setCellValue("Current score");
-                    sheet.getRow(4).createCell(6).setCellValue("Status");
-                    sheet.getRow(4).createCell(7).setCellValue("Gender");
-                    sheet.getRow(4).createCell(8).setCellValue("Birth date");
-                    sheet.getRow(4).createCell(9).setCellValue("National ID");
-                    sheet.getRow(4).createCell(10).setCellValue("Customer name KH");
-                    sheet.getRow(4).createCell(11).setCellValue("LEGAL DOCUMENT NAME");
-                    sheet.getRow(4).createCell(12).setCellValue("Nationality");
-                    sheet.getRow(4).createCell(13).setCellValue("Residence");
-                    sheet.getRow(4).createCell(14).setCellValue("Sector");
-                    sheet.getRow(4).createCell(15).setCellValue("Branch code");
-                    sheet.getRow(4).createCell(16).setCellValue("Legal Issue Date");
-                    sheet.getRow(4).createCell(17).setCellValue("Legal Expire Date");
+                    sheet.getRow(4).createCell(1).setCellValue("Customer name EN");
+                    sheet.getRow(4).createCell(2).setCellValue("Date assessment");
+                    sheet.getRow(4).createCell(3).setCellValue("Current assessment");
+                    sheet.getRow(4).createCell(4).setCellValue("Current score");
+                    sheet.getRow(4).createCell(5).setCellValue("Status");
+                    sheet.getRow(4).createCell(6).setCellValue("Gender");
+                    sheet.getRow(4).createCell(7).setCellValue("Birth date");
+                    sheet.getRow(4).createCell(8).setCellValue("National ID");
+                    sheet.getRow(4).createCell(9).setCellValue("Customer name KH");
+                    sheet.getRow(4).createCell(10).setCellValue("LEGAL DOCUMENT NAME");
+                    sheet.getRow(4).createCell(11).setCellValue("Nationality");
+                    sheet.getRow(4).createCell(12).setCellValue("Residence");
+                    sheet.getRow(4).createCell(13).setCellValue("Sector");
+                    sheet.getRow(4).createCell(14).setCellValue("Branch code");
+                    sheet.getRow(4).createCell(15).setCellValue("Legal Issue Date");
+                    sheet.getRow(4).createCell(16).setCellValue("Legal Expire Date");
 
-                    for (int i = 0; i <= 17; i++) {
+                    for (int i = 0; i <= 16; i++) {
                         sheet.getRow(4).getCell(i).setCellStyle(tableHeaderStyle);
                     }
 
@@ -654,26 +656,47 @@ public class EkycController {
                     for (ReportFull report : fullReport) {
 
                         sheet.createRow(rowIndex).createCell(0).setCellValue(index++);
-                        sheet.getRow(rowIndex).createCell(1).setCellValue(report.getId());
-                        sheet.getRow(rowIndex).createCell(2).setCellValue(report.getCustomerNameEn());
-                        sheet.getRow(rowIndex).createCell(3).setCellValue(report.getDateAssessment());
-                        sheet.getRow(rowIndex).createCell(4).setCellValue(report.getCurrentAssessment());
-                        sheet.getRow(rowIndex).createCell(5).setCellValue(report.getCurrentScore());
-                        sheet.getRow(rowIndex).createCell(6).setCellValue(report.getStatus());
-                        sheet.getRow(rowIndex).createCell(7).setCellValue(report.getGender());
-                        sheet.getRow(rowIndex).createCell(8).setCellValue(report.getBirthDate());
-                        sheet.getRow(rowIndex).createCell(9).setCellValue(report.getNationalId());
-                        sheet.getRow(rowIndex).createCell(10).setCellValue(report.getCustomerNameKh());
-                        sheet.getRow(rowIndex).createCell(11).setCellValue(report.getLegalDocName());
-                        sheet.getRow(rowIndex).createCell(12).setCellValue(report.getNationality());
-                        sheet.getRow(rowIndex).createCell(13).setCellValue(report.getResidence());
-                        sheet.getRow(rowIndex).createCell(14).setCellValue(report.getSector());
-                        sheet.getRow(rowIndex).createCell(15).setCellValue(report.getBranchCode());
-                        sheet.getRow(rowIndex).createCell(16).setCellValue(report.getIssuedDate());
-                        sheet.getRow(rowIndex).createCell(17).setCellValue(report.getExpiredDate());
+                        sheet.getRow(rowIndex).createCell(1).setCellValue(report.getCustomerNameEn());
+                        sheet.getRow(rowIndex).createCell(2).setCellValue(report.getDateAssessment());
+                        sheet.getRow(rowIndex).createCell(3).setCellValue(report.getCurrentAssessment());
+                        sheet.getRow(rowIndex).createCell(4).setCellValue(Double.parseDouble(report.getCurrentScore()));
+                        sheet.getRow(rowIndex).createCell(5).setCellValue(report.getStatus());
+                        sheet.getRow(rowIndex).createCell(6).setCellValue(report.getGender());
+                        sheet.getRow(rowIndex).createCell(7).setCellValue(report.getBirthDate());
 
-                        for (int i = 0; i <= 17; i++) {
-                            sheet.getRow(rowIndex).getCell(i).setCellStyle(tableStyle);
+                        Cell cell = sheet.getRow(rowIndex).createCell(8);
+                        String nationalId = report.getNationalId() != null ? report.getNationalId() : "";
+                        cell.setCellValue(nationalId);
+
+                        sheet.getRow(rowIndex).createCell(9).setCellValue(report.getCustomerNameKh());
+                        sheet.getRow(rowIndex).createCell(10).setCellValue(report.getLegalDocName());
+                        sheet.getRow(rowIndex).createCell(11).setCellValue(report.getNationality());
+                        sheet.getRow(rowIndex).createCell(12).setCellValue(report.getResidence());
+                        sheet.getRow(rowIndex).createCell(13).setCellValue(report.getSector());
+                        sheet.getRow(rowIndex).createCell(14).setCellValue(report.getBranchCode());
+                        sheet.getRow(rowIndex).createCell(15).setCellValue(report.getIssuedDate());
+                        sheet.getRow(rowIndex).createCell(16).setCellValue(report.getExpiredDate());
+
+                        for (int i = 0; i <= 16; i++) {
+                            if (i != 8) {
+                                sheet.getRow(rowIndex).getCell(i).setCellStyle(tableStyle);
+                            } else {
+                                CellStyle textStyle = workbook.createCellStyle();
+                                textStyle.setFont(commonFont);
+                                textStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                                textStyle.setBorderTop(BorderStyle.THIN);
+                                textStyle.setBorderBottom(BorderStyle.THIN);
+                                textStyle.setBorderLeft(BorderStyle.THIN);
+                                textStyle.setBorderRight(BorderStyle.THIN);
+                                textStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+                                textStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+                                textStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+                                textStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+                                
+                                DataFormat dataFormat = workbook.createDataFormat();
+                                textStyle.setDataFormat(dataFormat.getFormat("@"));
+                                cell.setCellStyle(textStyle);
+                            }
                         }
                         rowIndex++;
                     }
@@ -717,14 +740,16 @@ public class EkycController {
 
                     // 2. Add CSV Header Row
                     writer.println(
-                            "No.,Id,Customer name EN,Date assessment,Current assessment,Current Score,Status,Gender,Birth date,National ID,Customer name KH,LEGAL DOCUMENT NAME,Nationality,Residence,Sector,Branch code,Legal Issued Date,Legal Expired Date");
+                            "No.,Customer name EN,Date assessment,Current assessment,Current Score,Status,Gender,Birth date,National ID,Customer name KH,LEGAL DOCUMENT NAME,Nationality,Residence,Sector,Branch code,Legal Issued Date,Legal Expired Date");
 
                     int index = 1;
                     // 3. Loop and add data lines
                     for (ReportFull report : fullReport) {
+                        // CRITICAL: Format the string as ="021003005"
+                        String formattedNationalId = "=\"" + report.getNationalId() + "\"";
+
                         writer.println(String.join(",",
                                 String.valueOf(index++),
-                                escapeCsv(report.getId()),
                                 escapeCsv(report.getCustomerNameEn()),
                                 escapeCsv(report.getDateAssessment()),
                                 escapeCsv(report.getCurrentAssessment()),
@@ -732,7 +757,7 @@ public class EkycController {
                                 escapeCsv(report.getStatus()),
                                 escapeCsv(report.getGender()),
                                 escapeCsv(report.getBirthDate()),
-                                escapeCsv(report.getNationalId()),
+                                escapeCsv(formattedNationalId),
                                 escapeCsv(report.getCustomerNameKh()),
                                 escapeCsv(report.getLegalDocName()),
                                 escapeCsv(report.getNationality()),

@@ -2,7 +2,6 @@ package com.main.repository;
 
 import org.springframework.stereotype.Repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyb;
@@ -237,7 +236,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -250,7 +249,7 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
                         ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
@@ -320,7 +319,7 @@ public class EkybRepository {
                                                                                                                                                         .asText("");
                                                                         double score = Double.parseDouble(scoreString)
                                                                                         * 100;
-                                                                        map.put("score", String.valueOf(score));
+                                                                        map.put("score", String.format("%.2f", score));
 
                                                                         return map;
                                                                 })
@@ -334,7 +333,7 @@ public class EkybRepository {
                                                 : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
 
                                 double score = Double.parseDouble(scoreString) * 100;
-                                ekyb.setScore(String.valueOf(score));
+                                ekyb.setScore(String.format("%.2f", score));
 
                                 ekyb.setStatus(rs.getString("STATUS"));
                                 ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
@@ -363,7 +362,7 @@ public class EkybRepository {
                                 "           OR (TIN LIKE '%' || ? || '%')\r\n" + //
                                 "           OR (COMPANY_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "           OR (UPPER(COMPANY_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
-                                "ORDER BY ID DESC \r\n" + //
+                                "ORDER BY SCORE DESC \r\n" + //
                                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY  ";
 
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -411,7 +410,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -424,7 +423,7 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
                         ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
@@ -525,7 +524,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -539,7 +538,7 @@ public class EkybRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
                         ekyb.setStatus(rs.getString("STATUS"));
 
                         String statusDesc = StatusClassification.statusConvertor(score, rs.getString("STATUS"));
@@ -620,7 +619,8 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, FACE_MOI_SCORE, STATUS,\r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
-                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n" + 
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n"
+                                +
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYC_PROFILE A, LOG_DATE B\r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
@@ -641,7 +641,8 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, 0 AS FACE_MOI_SCORE, STATUS, \r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
-                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n" + 
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n"
+                                +
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYB_PROFILE C, LOG_DATE D\r\n" + //
                                 "  WHERE C.ID = D.TABLE_ID\r\n" + //
@@ -687,13 +688,13 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        history.setScore(String.valueOf(score));
+                        history.setScore(String.format("%.2f", score));
 
                         String faceScoreString = rs.getString("FACE_MOI_SCORE") == null ? "0"
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        history.setFaceScore(String.valueOf(faceScore));
+                        history.setFaceScore(String.format("%.2f", faceScore));
 
                         history.setCreateTime(rs.getString("CREATE_TIME2"));
 

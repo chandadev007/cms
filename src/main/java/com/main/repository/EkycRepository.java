@@ -236,7 +236,7 @@ public class EkycRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
 
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
@@ -249,7 +249,7 @@ public class EkycRepository {
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 });
@@ -287,7 +287,7 @@ public class EkycRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
@@ -299,7 +299,7 @@ public class EkycRepository {
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 }, id);
@@ -328,7 +328,7 @@ public class EkycRepository {
                                 "          OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%') \r\n" + //
                                 "          OR (UPPER(FIRST_NAME_EN) LIKE '%' || UPPER(?) || '%') \r\n" + //
                                 "          OR (UPPER(LAST_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
-                                "ORDER BY ID DESC \r\n" + //
+                                "ORDER BY SCORE DESC \r\n" + //
                                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY  ";
 
                 return jdbcTemplate.query(sql, (rs, rownum) -> {
@@ -351,7 +351,7 @@ public class EkycRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
@@ -363,7 +363,7 @@ public class EkycRepository {
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 }, searchValue, searchValue, searchValue, searchValue, searchValue,
@@ -617,7 +617,7 @@ public class EkycRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
@@ -628,7 +628,7 @@ public class EkycRepository {
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         String statusDesc = StatusClassification.statusConvertor(score, rs.getString("STATUS"));
                         ekyc.setStatusDesc(statusDesc);
@@ -855,7 +855,6 @@ public class EkycRepository {
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
                         ReportFull reportFull = new ReportFull();
 
-                        reportFull.setId(rs.getString("ID_NUMBER"));
                         reportFull.setCustomerNameEn(rs.getString("CUSTOMER_NAME_EN"));
                         reportFull.setDateAssessment(rs.getString("DATE_ASSESSMENT"));
                         reportFull.setCurrentAssessment(rs.getString("CURREENT_ASSESSMENT"));
@@ -863,7 +862,7 @@ public class EkycRepository {
                         String scoreString = rs.getString("CURRENT_SCORE") == null ? "0"
                                         : rs.getString("CURRENT_SCORE").isEmpty() ? "0" : rs.getString("CURRENT_SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        reportFull.setCurrentScore(String.valueOf(score));
+                        reportFull.setCurrentScore(String.format("%.2f", score));
 
                         reportFull.setStatus(rs.getString("STATUS"));
                         reportFull.setGender(rs.getString("GENDER"));
