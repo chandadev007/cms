@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyb;
 import com.main.model.History;
 import com.main.model.HistoryAction;
-import com.main.utilities.StatusClassification;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.Types;
@@ -186,7 +185,8 @@ public class EkybRepository {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
                                 "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, \r\n" + //
-                                "       RES_DIR_LIST_JSON\r\n" + //
+                                "       RES_DIR_LIST_JSON, \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE STATUS = 0\r\n" + //
                                 "ORDER BY ID ASC ";
@@ -252,7 +252,7 @@ public class EkybRepository {
                         ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
-                        ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -265,8 +265,9 @@ public class EkybRepository {
         public Ekyb getEkybById(String id) {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE ID = ?";
 
@@ -336,7 +337,7 @@ public class EkybRepository {
                                 ekyb.setScore(String.format("%.2f", score));
 
                                 ekyb.setStatus(rs.getString("STATUS"));
-                                ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                                ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                                 ekyb.setType(rs.getString("TYPE"));
                                 ekyb.setNote(rs.getString("NOTE"));
@@ -354,8 +355,9 @@ public class EkybRepository {
                 int offSet = (page - 1) * size;
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE 1 = 1 \r\n" + //
                                 "      AND ((SINGLE_ID LIKE '%' || ? || '%') \r\n" + //
@@ -426,7 +428,7 @@ public class EkybRepository {
                         ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
-                        ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -469,9 +471,11 @@ public class EkybRepository {
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
                                 "         A.RES_DIR_LIST_JSON, B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(A.SCORE, A.STATUS) AS STATUS_DESC \r\n" + //
                                 "              \r\n" + //
+
                                 "  FROM EKYB_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYB_PROFILE' \r\n" + //
@@ -540,9 +544,7 @@ public class EkybRepository {
 
                         ekyb.setScore(String.format("%.2f", score));
                         ekyb.setStatus(rs.getString("STATUS"));
-
-                        String statusDesc = StatusClassification.statusConvertor(score, rs.getString("STATUS"));
-                        ekyb.setStatusDesc(statusDesc);
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -592,7 +594,7 @@ public class EkybRepository {
                                 HistoryAction step3 = new HistoryAction();
                                 step3.setDescription(
                                                 "CamDx score: " + new DecimalFormat("0.##").format(score) + "/100 - "
-                                                                + statusDesc);
+                                                                + rs.getString("STATUS_DESC"));
                                 step3.setUserId(rs.getString("USER_ID"));
                                 step3.setUserName(rs.getString("USER_NAME"));
                                 step3.setActionDate(rs.getString("CREATE_TIME2"));
