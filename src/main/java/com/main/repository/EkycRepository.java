@@ -6,7 +6,6 @@ import com.main.model.Ekyc;
 import com.main.model.History;
 import com.main.model.HistoryAction;
 import com.main.model.ReportFull;
-import com.main.utilities.StatusClassification;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.Types;
@@ -211,7 +210,8 @@ public class EkycRepository {
                                 "       TO_CHAR(DOB, 'YYYY-MM-DD') DOB, \r\n" + //
                                 "       TO_CHAR(ISSUED_DATE, 'YYYY-MM-DD') ISSUED_DATE, TO_CHAR(EXPIRED_DATE, 'YYYY-MM-DD') EXPIRED_DATE, \r\n"
                                 + //
-                                "       NOTE, SELFIE_PATH\r\n" + //
+                                "       NOTE, SELFIE_PATH, \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYC_PROFILE \r\n" + //
                                 "WHERE STATUS = 0  \r\n" +
                                 "ORDER BY ID ASC";
@@ -236,20 +236,20 @@ public class EkycRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
 
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
                         ekyc.setErrorDetail(rs.getString("ERROR_DETAIL"));
                         ekyc.setStatus(rs.getString("STATUS"));
-                        ekyc.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyc.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         String faceScoreString = rs.getString("FACE_MOI_SCORE") == null ? "0"
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 });
@@ -262,7 +262,8 @@ public class EkycRepository {
                                 "       TO_CHAR(DOB, 'YYYY-MM-DD') DOB, \r\n" + //
                                 "       TO_CHAR(ISSUED_DATE, 'YYYY-MM-DD') ISSUED_DATE, TO_CHAR(EXPIRED_DATE, 'YYYY-MM-DD') EXPIRED_DATE, \r\n"
                                 + //
-                                "       NOTE, SELFIE_PATH\r\n" + //
+                                "       NOTE, SELFIE_PATH, \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYC_PROFILE \r\n" + //
                                 "WHERE ID = ? ";
 
@@ -287,19 +288,18 @@ public class EkycRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
                         ekyc.setErrorDetail(rs.getString("ERROR_DETAIL"));
                         ekyc.setStatus(rs.getString("STATUS"));
-                        ekyc.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
-
+                        ekyc.setStatusDesc(rs.getString("STATUS_DESC"));
                         String faceScoreString = rs.getString("FACE_MOI_SCORE") == null ? "0"
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 }, id);
@@ -316,7 +316,8 @@ public class EkycRepository {
                                 "       TO_CHAR(DOB, 'YYYY-MM-DD') DOB, \r\n" + //
                                 "       TO_CHAR(ISSUED_DATE, 'YYYY-MM-DD') ISSUED_DATE, TO_CHAR(EXPIRED_DATE, 'YYYY-MM-DD') EXPIRED_DATE, \r\n"
                                 + //
-                                "       NOTE, SELFIE_PATH\r\n" + //
+                                "       NOTE, SELFIE_PATH, \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYC_PROFILE \r\n" + //
                                 "WHERE 1=1\r\n" + //
                                 "      AND ((ID_NUMBER LIKE '%' || ? || '%') \r\n" + //
@@ -328,7 +329,7 @@ public class EkycRepository {
                                 "          OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%') \r\n" + //
                                 "          OR (UPPER(FIRST_NAME_EN) LIKE '%' || UPPER(?) || '%') \r\n" + //
                                 "          OR (UPPER(LAST_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
-                                "ORDER BY ID DESC \r\n" + //
+                                "ORDER BY SCORE DESC \r\n" + //
                                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY  ";
 
                 return jdbcTemplate.query(sql, (rs, rownum) -> {
@@ -351,19 +352,19 @@ public class EkycRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
                         ekyc.setErrorDetail(rs.getString("ERROR_DETAIL"));
                         ekyc.setStatus(rs.getString("STATUS"));
-                        ekyc.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyc.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         String faceScoreString = rs.getString("FACE_MOI_SCORE") == null ? "0"
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
 
                         return ekyc;
                 }, searchValue, searchValue, searchValue, searchValue, searchValue,
@@ -586,9 +587,10 @@ public class EkycRepository {
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
                                 "         B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2, \r\n"
                                 + //
                                 "              \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(A.SCORE, A.STATUS) AS STATUS_DESC \r\n" + //
                                 "  FROM EKYC_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE' \r\n" + //
@@ -617,7 +619,7 @@ public class EkycRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyc.setScore(String.valueOf(score));
+                        ekyc.setScore(String.format("%.2f", score));
                         ekyc.setType(rs.getString("TYPE"));
                         ekyc.setNote(rs.getString("NOTE"));
                         ekyc.setSelfiePath(rs.getString("SELFIE_PATH"));
@@ -628,10 +630,8 @@ public class EkycRepository {
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        ekyc.setFaceScore(String.valueOf(faceScore));
-
-                        String statusDesc = StatusClassification.statusConvertor(score, rs.getString("STATUS"));
-                        ekyc.setStatusDesc(statusDesc);
+                        ekyc.setFaceScore(String.format("%.2f", faceScore));
+                        ekyc.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         if (rowNum == 0) {
                                 HistoryAction step1 = new HistoryAction();
@@ -654,7 +654,7 @@ public class EkycRepository {
                         if (rowNum > 1) {
                                 HistoryAction step3 = new HistoryAction();
                                 step3.setDescription("CamDx score: " + new DecimalFormat("0.##").format(score)
-                                                + "/100 - " + statusDesc);
+                                                + "/100 - " + rs.getString("STATUS_DESC"));
                                 step3.setUserId(rs.getString("USER_ID"));
                                 step3.setUserName(rs.getString("USER_NAME"));
                                 step3.setActionDate(rs.getString("CREATE_TIME2"));
@@ -721,9 +721,10 @@ public class EkycRepository {
         public Map<String, String> getSummaryByChannel(String fromDate, String toDate) {
                 String sql = "SELECT X.APP_CHANNEL, COUNT(*) AS COUNT_VALUE \r\n" + //
                                 "FROM(\r\n" + //
-                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, ACTION_TYPE, UNIT_ID, USER_ID, USER_NAME, CREATED_TIME\r\n"
+                                "  WITH LOG_DATE AS (SELECT TABLE_NAME, TABLE_ID, MIN(CREATED_TIME) AS CREATED_TIME\r\n"
                                 + //
-                                "                    FROM CAMDX_LOG T WHERE T.ACTION_TYPE = 'USER'\r\n" + //
+                                "                    FROM CAMDX_LOG T \r\n" + //
+                                "                    GROUP BY TABLE_NAME, TABLE_ID\r\n" + //
                                 "                    )      \r\n" + //
                                 "\r\n" + //
                                 "  SELECT A.ID, 'eKYC' REQUEST_TYPE, A.STATUS, B.CREATED_TIME, A.APP_CHANNEL\r\n" + //
@@ -854,7 +855,6 @@ public class EkycRepository {
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
                         ReportFull reportFull = new ReportFull();
 
-                        reportFull.setId(rs.getString("ID_NUMBER"));
                         reportFull.setCustomerNameEn(rs.getString("CUSTOMER_NAME_EN"));
                         reportFull.setDateAssessment(rs.getString("DATE_ASSESSMENT"));
                         reportFull.setCurrentAssessment(rs.getString("CURREENT_ASSESSMENT"));
@@ -862,7 +862,7 @@ public class EkycRepository {
                         String scoreString = rs.getString("CURRENT_SCORE") == null ? "0"
                                         : rs.getString("CURRENT_SCORE").isEmpty() ? "0" : rs.getString("CURRENT_SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        reportFull.setCurrentScore(String.valueOf(score));
+                        reportFull.setCurrentScore(String.format("%.2f", score));
 
                         reportFull.setStatus(rs.getString("STATUS"));
                         reportFull.setGender(rs.getString("GENDER"));

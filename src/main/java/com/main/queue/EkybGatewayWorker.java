@@ -1,6 +1,5 @@
 package com.main.queue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyb;
 import com.main.service.DBLogService;
 import com.main.service.EkybService;
@@ -18,9 +17,6 @@ import java.util.Map;
 
 @Service
 public class EkybGatewayWorker {
-
-    private final ObjectMapper objectMapper;
-
     private static final Logger logger = LoggerFactory.getLogger(EkybGatewayWorker.class);
 
     private final EkybService ekybService;
@@ -32,12 +28,11 @@ public class EkybGatewayWorker {
             EkybService ekybService,
             DBLogService dbLogService,
             RestClient camdxRestClient, // Injected bean from config
-            @Value("${cms.camdx.ekyb.verify-basic-infor}") String ekybVerifyBasicUrl, ObjectMapper objectMapper) {
+            @Value("${cms.camdx.ekyb.verify-basic-infor}") String ekybVerifyBasicUrl) {
         this.ekybService = ekybService;
         this.dbLogService = dbLogService;
         this.restClient = camdxRestClient;
         this.ekybVerifyBasicUrl = ekybVerifyBasicUrl;
-        this.objectMapper = objectMapper;
     }
 
     @Async("CamdxQueueExecutor") // If Ekyb batch sizes grow, swap this to a custom "EkybQueueExecutor"
@@ -266,8 +261,6 @@ public class EkybGatewayWorker {
             map.put("company_name_en", ekyb.getCompanyNameEn());
             map.put("company_name_kh", ekyb.getCompanyNameKh());
             map.put("directors", ekyb.getDirList());
-
-            System.out.println(objectMapper.writeValueAsString(map));
 
             final String ekybVerifyBasicUrl2 = ekybVerifyBasicUrl;
             if (ekybVerifyBasicUrl2 != null) {

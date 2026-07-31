@@ -2,13 +2,11 @@ package com.main.repository;
 
 import org.springframework.stereotype.Repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.model.Ekyb;
 import com.main.model.History;
 import com.main.model.HistoryAction;
-import com.main.utilities.StatusClassification;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.Types;
@@ -187,7 +185,8 @@ public class EkybRepository {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
                                 "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, \r\n" + //
-                                "       RES_DIR_LIST_JSON\r\n" + //
+                                "       RES_DIR_LIST_JSON, \r\n" + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE STATUS = 0\r\n" + //
                                 "ORDER BY ID ASC ";
@@ -210,7 +209,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list
@@ -237,7 +236,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -250,10 +249,10 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
-                        ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -266,8 +265,9 @@ public class EkybRepository {
         public Ekyb getEkybById(String id) {
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE ID = ?";
 
@@ -290,7 +290,7 @@ public class EkybRepository {
                                 try {
                                         dirListNode = objectMapper.readTree(dirList);
                                         ekyb.setDirList(dirListNode);
-                                } catch (JsonProcessingException e) {
+                                } catch (Exception e) {
                                 }
 
                                 // response director json list
@@ -320,7 +320,7 @@ public class EkybRepository {
                                                                                                                                                         .asText("");
                                                                         double score = Double.parseDouble(scoreString)
                                                                                         * 100;
-                                                                        map.put("score", String.valueOf(score));
+                                                                        map.put("score", String.format("%.2f", score));
 
                                                                         return map;
                                                                 })
@@ -334,10 +334,10 @@ public class EkybRepository {
                                                 : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
 
                                 double score = Double.parseDouble(scoreString) * 100;
-                                ekyb.setScore(String.valueOf(score));
+                                ekyb.setScore(String.format("%.2f", score));
 
                                 ekyb.setStatus(rs.getString("STATUS"));
-                                ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                                ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                                 ekyb.setType(rs.getString("TYPE"));
                                 ekyb.setNote(rs.getString("NOTE"));
@@ -355,15 +355,16 @@ public class EkybRepository {
                 int offSet = (page - 1) * size;
                 String sql = "SELECT ID, APP_CODE, APP_CHANNEL, SINGLE_ID, TIN, COMPANY_NAME_KH, COMPANY_NAME_EN, \r\n"
                                 + //
-                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON \r\n"
+                                "       DIR_LIST_JSON, STATUS, SCORE, TYPE, ERROR_DETAIL, NOTE, RES_DIR_LIST_JSON, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC \r\n" + //
                                 "FROM EKYB_PROFILE \r\n" + //
                                 "WHERE 1 = 1 \r\n" + //
                                 "      AND ((SINGLE_ID LIKE '%' || ? || '%') \r\n" + //
                                 "           OR (TIN LIKE '%' || ? || '%')\r\n" + //
                                 "           OR (COMPANY_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "           OR (UPPER(COMPANY_NAME_EN) LIKE '%' || UPPER(?) || '%'))\r\n" + //
-                                "ORDER BY ID DESC \r\n" + //
+                                "ORDER BY SCORE DESC \r\n" + //
                                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY  ";
 
                 return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -384,7 +385,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list
@@ -411,7 +412,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -424,10 +425,10 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
 
                         ekyb.setStatus(rs.getString("STATUS"));
-                        ekyb.setStatusDesc(StatusClassification.statusConvertor(score, rs.getString("STATUS")));
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -470,9 +471,11 @@ public class EkybRepository {
                                 "              ELSE 'SYSTEM'\r\n" + //
                                 "         END AS USER_NAME,\r\n" + //
                                 "         A.RES_DIR_LIST_JSON, B.CREATED_TIME, \r\n" + //
-                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2\r\n"
+                                "         TO_CHAR(TO_DATE(B.CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2, \r\n"
                                 + //
+                                "       PKG_CAMDX.STATUS_CLASSIFICATION(A.SCORE, A.STATUS) AS STATUS_DESC \r\n" + //
                                 "              \r\n" + //
+
                                 "  FROM EKYB_PROFILE A, CAMDX_LOG B \r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYB_PROFILE' \r\n" + //
@@ -498,7 +501,7 @@ public class EkybRepository {
                         try {
                                 dirListNode = objectMapper.readTree(dirList);
                                 ekyb.setDirList(dirListNode);
-                        } catch (JsonProcessingException e) {
+                        } catch (Exception e) {
                         }
 
                         // response director json list
@@ -525,7 +528,7 @@ public class EkybRepository {
                                                                                                                 : node.path("score")
                                                                                                                                 .asText("");
                                                                 double score = Double.parseDouble(scoreString) * 100;
-                                                                map.put("score", String.valueOf(score));
+                                                                map.put("score", String.format("%.2f", score));
 
                                                                 return map;
                                                         })
@@ -539,11 +542,9 @@ public class EkybRepository {
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
 
-                        ekyb.setScore(String.valueOf(score));
+                        ekyb.setScore(String.format("%.2f", score));
                         ekyb.setStatus(rs.getString("STATUS"));
-
-                        String statusDesc = StatusClassification.statusConvertor(score, rs.getString("STATUS"));
-                        ekyb.setStatusDesc(statusDesc);
+                        ekyb.setStatusDesc(rs.getString("STATUS_DESC"));
 
                         ekyb.setType(rs.getString("TYPE"));
                         ekyb.setNote(rs.getString("NOTE"));
@@ -593,7 +594,7 @@ public class EkybRepository {
                                 HistoryAction step3 = new HistoryAction();
                                 step3.setDescription(
                                                 "CamDx score: " + new DecimalFormat("0.##").format(score) + "/100 - "
-                                                                + statusDesc);
+                                                                + rs.getString("STATUS_DESC"));
                                 step3.setUserId(rs.getString("USER_ID"));
                                 step3.setUserName(rs.getString("USER_NAME"));
                                 step3.setActionDate(rs.getString("CREATE_TIME2"));
@@ -620,15 +621,21 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, FACE_MOI_SCORE, STATUS,\r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n"
+                                +
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYC_PROFILE A, LOG_DATE B\r\n" + //
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
                                 "        AND ((ID_NUMBER LIKE '%' || ? || '%') \r\n" + //
+                                "            OR ((LAST_NAME_KH || ' ' || FIRST_NAME_KH) LIKE '%' || TO_NCHAR(?) || '%')\r\n"
+                                + //
+                                "            OR (UPPER(LAST_NAME_EN) || ' ' || UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n"
+                                + //
                                 "            OR (FIRST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n" + //
-                                "            OR (LAST_NAME_EN LIKE UPPER('%' || ? || '%')))\r\n" + //
+                                "            OR (UPPER(LAST_NAME_EN) LIKE UPPER('%' || ? || '%')))\r\n" + //
                                 "  UNION ALL\r\n" + //
                                 "  SELECT ID, 'eKYB' AS REQUEST_TYPE, APP_CODE, APP_CHANNEL, N'' AS FIRST_NAME_KH, N'' AS lAST_NAME_KH, \r\n"
                                 + //
@@ -636,6 +643,8 @@ public class EkybRepository {
                                 + //
                                 "         SCORE, 0 AS FACE_MOI_SCORE, STATUS, \r\n" + //
                                 "         PKG_CAMDX.STATUS_CLASSIFICATION(SCORE, STATUS) AS STATUS_DESC, \r\n" + //
+                                "         TO_CHAR(TO_DATE(CREATED_TIME, 'YYYYMMDDHH24MI'), 'YYYY-MM-DD HH24:MI') AS CREATE_TIME2,\r\n"
+                                +
                                 "         CREATED_TIME, TYPE\r\n" + //
                                 "  FROM EKYB_PROFILE C, LOG_DATE D\r\n" + //
                                 "  WHERE C.ID = D.TABLE_ID\r\n" + //
@@ -681,26 +690,24 @@ public class EkybRepository {
                         String scoreString = rs.getString("SCORE") == null ? "0"
                                         : rs.getString("SCORE").isEmpty() ? "0" : rs.getString("SCORE");
                         double score = Double.parseDouble(scoreString) * 100;
-                        history.setScore(String.valueOf(score));
+                        history.setScore(String.format("%.2f", score));
 
                         String faceScoreString = rs.getString("FACE_MOI_SCORE") == null ? "0"
                                         : rs.getString("FACE_MOI_SCORE").isEmpty() ? "0"
                                                         : rs.getString("FACE_MOI_SCORE");
                         double faceScore = Double.parseDouble(faceScoreString) * 100;
-                        history.setFaceScore(String.valueOf(faceScore));
+                        history.setFaceScore(String.format("%.2f", faceScore));
 
-                        history.setUserId(rs.getString("USER_ID"));
-                        history.setUserName(rs.getString("USER_NAME"));
                         history.setCreateTime(rs.getString("CREATE_TIME2"));
 
                         return history;
                 }, searchValue, searchValue, searchValue, searchValue, searchValue, searchValue, searchValue,
-                                searchValue, searchValue, appChannel, appChannel, requestType, requestType, statusDesc,
+                                searchValue, searchValue, searchValue, searchValue, appChannel, appChannel, requestType,
+                                requestType, statusDesc,
                                 statusDesc,
                                 fromDate, fromDate, toDate, toDate, offSet, size);
         }
 
-        @SuppressWarnings("null")
         public int getListByAppChannelCount(String searchValue, String appChannel,
                         String requestType, String statusDesc, String fromDate, String toDate) {
                 String sql = "\r\n" + //
@@ -721,10 +728,14 @@ public class EkybRepository {
                                 "  WHERE A.ID = B.TABLE_ID\r\n" + //
                                 "        AND B.TABLE_NAME = 'EKYC_PROFILE'\r\n" + //
                                 "        AND ((ID_NUMBER LIKE '%' || ? || '%') \r\n" + //
+                                "            OR ((LAST_NAME_KH || ' ' || FIRST_NAME_KH) LIKE '%' || TO_NCHAR(?) || '%')\r\n"
+                                + //
+                                "            OR (UPPER(LAST_NAME_EN) || ' ' || UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n"
+                                + //
                                 "            OR (FIRST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (LAST_NAME_KH LIKE '%' || TO_NCHAR(?) || '%')\r\n" + //
                                 "            OR (UPPER(FIRST_NAME_EN) LIKE UPPER('%' || ? || '%'))\r\n" + //
-                                "            OR (LAST_NAME_EN LIKE UPPER('%' || ? || '%')))\r\n" + //
+                                "            OR (UPPER(LAST_NAME_EN) LIKE UPPER('%' || ? || '%')))\r\n" + //
                                 "  UNION ALL\r\n" + //
                                 "  SELECT ID, 'eKYB' AS REQUEST_TYPE, APP_CODE, APP_CHANNEL, N'' AS FIRST_NAME_KH, N'' AS lAST_NAME_KH, \r\n"
                                 + //

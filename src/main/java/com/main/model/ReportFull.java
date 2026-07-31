@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReportFull {
 
-  private String id;
   private String customerNameEn;
   private String dateAssessment;
   private String currentAssessment;
@@ -25,13 +24,7 @@ public class ReportFull {
 
   private String channel;
   private String requestType;
-
-  public String getId() {
-    return id;
-  }
-  public void setId(String id) {
-    this.id = id;
-  }
+  
   public String getCustomerNameEn() {
     return customerNameEn;
   }
